@@ -1,0 +1,11 @@
+import type { ReactNode } from 'react'
+
+export interface FormFieldProps {
+  label?: string
+  htmlFor?: string
+  hint?: string
+  error?: string
+  required?: boolean
+  className?: string
+  children: ReactNode
+}

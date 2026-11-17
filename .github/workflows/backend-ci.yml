@@ -1,0 +1,90 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'bl-backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'bl-backend/**'
+      - '.github/workflows/backend-ci.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Lint, Test & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bl-backend
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: football_booking
+          MYSQL_USER: app_user
+          MYSQL_PASSWORD: app_password
+          MYSQL_ROOT_PASSWORD: root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -proot_password --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli -a redis_password ping"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+        entrypoint: sh
+        command: -c "redis-server --requirepass redis_password"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: bl-backend/go.mod
+          cache-dependency-path: bl-backend/go.sum
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: bl-backend
+          version: latest
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Run unit & integration tests
+        env:
+          APP_ENV: test
+          TZ: Asia/Jakarta
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: app_user
+          DB_PASS: app_password
+          DB_NAME: football_booking
+          REDIS_ADDR: 127.0.0.1:6379
+          REDIS_PASS: redis_password
+          JWT_SECRET: ci-test-secret-with-at-least-32-random-bytes
+        run: go test -race -coverprofile=coverage.out ./...
+
+      - name: Build binary
+        run: go build -o bin/api ./cmd/api

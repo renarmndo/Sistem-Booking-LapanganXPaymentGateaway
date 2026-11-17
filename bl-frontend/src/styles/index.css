@@ -1,0 +1,75 @@
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: #FAFAF7;
+    color: #1C1F1D;
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Mowing stripes — latar hero */
+.pattern-stripes {
+  background-color: #0A2418;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0 64px,
+    rgba(255, 255, 255, 0.025) 64px 128px
+  );
+}
+
+/* Dot grid */
+.pattern-dots {
+  background-image: radial-gradient(rgba(31, 122, 77, 0.12) 1.5px, transparent 1.5px);
+  background-size: 20px 20px;
+}
+
+/* Hatch — slot booked */
+.pattern-hatch {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0 5px,
+    #D2CFC6 5px 6px
+  );
+}
+
+/* Dots — slot blocked */
+.pattern-blocked {
+  background-image: radial-gradient(#D2CFC6 1.5px, transparent 1.5px);
+  background-size: 6px 6px;
+}
+
+/* Safe-area utilities */
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

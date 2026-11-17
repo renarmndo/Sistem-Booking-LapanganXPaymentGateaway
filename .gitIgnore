@@ -1,1 +1,39 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Go
+bin/
+*.test
+coverage.out
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+npm-debug.log*
+
+# Runtime and generated files
+uploads/
+*.log
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Docker
+*.pid
+
+# Generated API documentation
 /docs
+docs/swagger.json
+docs/swagger.yaml
+docs/docs.go
+
+
+
+# ai agent
+/qodo
