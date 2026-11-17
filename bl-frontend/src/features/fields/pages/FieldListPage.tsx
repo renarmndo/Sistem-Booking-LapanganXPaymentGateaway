@@ -137,16 +137,15 @@ export function FieldListPage() {
     filterValues.facility_ids.length
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
+    <div className="w-full space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 xl:px-14 2xl:px-16">
       <PageHeader
         title="Daftar Lapangan"
         subtitle="Pilih lapangan yang sesuai dengan format pertandingan dan fasilitas tim Anda."
         breadcrumbs={[{ label: 'Beranda', to: PATHS.HOME }, { label: 'Lapangan' }]}
-        showBack
       />
 
       {/* Top Search + Sort + Mobile Filter Trigger */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-line bg-surface p-3 shadow-xs">
         <SearchInput
           value={searchInput}
           onChange={setSearchInput}
@@ -188,8 +187,8 @@ export function FieldListPage() {
       </div>
 
       {/* Main Content: Desktop Sidebar + Field Grid */}
-      <div className="grid gap-6 lg:grid-cols-12">
-        <aside className="hidden lg:col-span-3 lg:block">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+        <aside className="hidden lg:block lg:w-72 lg:shrink-0 xl:w-80">
           <Card padding="md" className="sticky top-20">
             <FilterPanel
               values={filterValues}
@@ -200,7 +199,7 @@ export function FieldListPage() {
           </Card>
         </aside>
 
-        <div className="lg:col-span-9">
+        <div className="min-w-0 flex-1">
           <FieldGrid
             items={fieldsQuery.data?.items ?? []}
             meta={fieldsQuery.data?.meta}

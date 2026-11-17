@@ -1,2 +1,2 @@
 export { PageHeader } from './PageHeader'
-export type { BreadcrumbItem, PageHeaderProps } from './PageHeader'
+export type { BreadcrumbEntry, BreadcrumbEntry as BreadcrumbItem, PageHeaderProps } from './PageHeader'

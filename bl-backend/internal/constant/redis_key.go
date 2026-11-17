@@ -27,3 +27,7 @@ const FieldsListCachePrefix = "cache:fields:list"
 func FieldsListCacheKey(queryHash string) string {
 	return fmt.Sprintf("%s:%s", FieldsListCachePrefix, queryHash)
 }
+
+func AvailCacheKey(fieldID uint, date string) string {
+	return fmt.Sprintf("cache:avail:%d:%s", fieldID, date)
+}

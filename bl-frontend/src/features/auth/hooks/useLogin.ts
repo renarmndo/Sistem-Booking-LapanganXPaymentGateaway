@@ -17,7 +17,16 @@ interface LocationState {
 export function getRedirectPathForRole(role: UserRole, from?: LocationState['from']): string {
   if (role === 'admin') return PATHS.ADMIN_DASHBOARD
   if (role === 'owner') return PATHS.OWNER_DASHBOARD
-  if (from?.pathname && from.pathname !== PATHS.LOGIN && from.pathname !== PATHS.REGISTER) {
+  const isRestrictedPath =
+    from?.pathname?.startsWith('/admin') ||
+    from?.pathname?.startsWith('/owner') ||
+    from?.pathname === PATHS.FORBIDDEN
+  if (
+    from?.pathname &&
+    !isRestrictedPath &&
+    from.pathname !== PATHS.LOGIN &&
+    from.pathname !== PATHS.REGISTER
+  ) {
     return `${from.pathname}${from.search ?? ''}`
   }
   return PATHS.HOME

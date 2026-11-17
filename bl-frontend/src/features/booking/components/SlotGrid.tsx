@@ -8,6 +8,7 @@ export interface SlotGridProps {
   isError: boolean
   onRetry: () => void
   selectedTimes?: string[]
+  highlightedTimes?: string[]
   onToggleSlot?: (slot: SlotAvailability) => void
 }
 
@@ -17,6 +18,7 @@ export function SlotGrid({
   isError,
   onRetry,
   selectedTimes = [],
+  highlightedTimes = [],
   onToggleSlot,
 }: SlotGridProps) {
   if (isLoading) {
@@ -51,6 +53,7 @@ export function SlotGrid({
           price={slot.price}
           status={slot.status}
           selected={selectedTimes.includes(slot.start_time)}
+          highlighted={highlightedTimes.includes(slot.start_time)}
           onToggle={onToggleSlot ? () => onToggleSlot(slot) : undefined}
         />
       ))}

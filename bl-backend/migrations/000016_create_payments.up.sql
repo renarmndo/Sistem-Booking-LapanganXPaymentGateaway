@@ -1,0 +1,23 @@
+CREATE TABLE payments (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    booking_id BIGINT UNSIGNED NOT NULL,
+    order_id VARCHAR(64) NOT NULL,
+    method ENUM('midtrans', 'cash', 'transfer_manual') NOT NULL DEFAULT 'midtrans',
+    channel VARCHAR(50) NULL,
+    amount BIGINT NOT NULL,
+    status ENUM('pending', 'paid', 'failed', 'cancelled', 'expired', 'challenge', 'refunded', 'unpaid', 'partial') NOT NULL DEFAULT 'pending',
+    snap_token VARCHAR(255) NULL,
+    snap_redirect_url VARCHAR(512) NULL,
+    transaction_id VARCHAR(100) NULL,
+    paid_at DATETIME(6) NULL,
+    needs_review BOOLEAN NOT NULL DEFAULT FALSE,
+    recorded_by BIGINT UNSIGNED NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_payments_order_id (order_id),
+    KEY idx_payments_booking_id (booking_id),
+    KEY idx_payments_status (status),
+    CONSTRAINT fk_payments_booking_id FOREIGN KEY (booking_id) REFERENCES bookings (id) ON DELETE CASCADE,
+    CONSTRAINT fk_payments_recorded_by FOREIGN KEY (recorded_by) REFERENCES users (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

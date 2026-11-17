@@ -8,6 +8,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import { Badge, type BadgeVariant } from '@/components/ui'
+import { BOOKING_STATUS_META } from '@/constants/bookingStatus'
 import type { StatusBadgeProps } from './StatusBadge.types'
 
 interface StatusConfig {
@@ -18,12 +19,13 @@ interface StatusConfig {
 
 const STATUS_MAP: Record<string, StatusConfig> = {
   available: { label: 'Tersedia', variant: 'success', icon: CheckCircle2 },
-  pending: { label: 'Menunggu Pembayaran', variant: 'warning', icon: Clock },
-  confirmed: { label: 'Terkonfirmasi', variant: 'success', icon: CheckCircle2 },
+  pending: { label: BOOKING_STATUS_META.PENDING_PAYMENT.label, variant: BOOKING_STATUS_META.PENDING_PAYMENT.variant, icon: Clock },
+  pending_payment: { label: BOOKING_STATUS_META.PENDING_PAYMENT.label, variant: BOOKING_STATUS_META.PENDING_PAYMENT.variant, icon: Clock },
+  confirmed: { label: BOOKING_STATUS_META.CONFIRMED.label, variant: BOOKING_STATUS_META.CONFIRMED.variant, icon: CheckCircle2 },
   paid: { label: 'Lunas', variant: 'success', icon: CheckCircle2 },
-  completed: { label: 'Selesai', variant: 'primary', icon: ShieldCheck },
-  cancelled: { label: 'Dibatalkan', variant: 'danger', icon: XCircle },
-  expired: { label: 'Kedaluwarsa', variant: 'neutral', icon: Clock },
+  completed: { label: BOOKING_STATUS_META.COMPLETED.label, variant: BOOKING_STATUS_META.COMPLETED.variant, icon: ShieldCheck },
+  cancelled: { label: BOOKING_STATUS_META.CANCELLED.label, variant: BOOKING_STATUS_META.CANCELLED.variant, icon: XCircle },
+  expired: { label: BOOKING_STATUS_META.EXPIRED.label, variant: BOOKING_STATUS_META.EXPIRED.variant, icon: Clock },
   refunded: { label: 'Refund', variant: 'info', icon: RefreshCw },
   active: { label: 'Aktif', variant: 'success', icon: CheckCircle2 },
   inactive: { label: 'Nonaktif', variant: 'neutral', icon: Ban },

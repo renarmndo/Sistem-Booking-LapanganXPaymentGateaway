@@ -18,7 +18,11 @@ export interface DataTableProps<T> {
   onSort?: (key: string) => void
   page?: number
   totalPages?: number
+  totalItems?: number
   onPageChange?: (page: number) => void
+  limit?: number
+  limitOptions?: number[]
+  onLimitChange?: (limit: number) => void
   loading?: boolean
   emptyTitle?: string
   emptyDescription?: string

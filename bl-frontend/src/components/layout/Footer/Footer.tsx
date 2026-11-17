@@ -5,13 +5,13 @@ const CURRENT_YEAR = new Date().getFullYear()
 
 export function Footer() {
   return (
-    <footer className="border-t border-primary-900 bg-primary-950 text-primary-100">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-2 lg:grid-cols-4 sm:px-6">
+    <footer className="bg-primary-950 text-primary-100">
+      <div className="grid w-full gap-8 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-4 lg:px-10 xl:px-14 2xl:px-16">
         <div>
-          <p className="font-display text-xl font-bold text-surface">Pitch &amp; Co.</p>
+          <p className="font-display text-xl font-bold text-surface">Noel Futsal</p>
           <p className="mt-3 text-sm leading-relaxed text-primary-200">
-            Pengalaman reservasi lapangan sepak bola &amp; mini soccer berstandar pro dengan jadwal
-            real-time dan pembayaran instan.
+            Arena futsal Noel Futsal dengan pemesanan jadwal real-time, harga transparan, dan
+            pembayaran instan.
           </p>
         </div>
 
@@ -39,8 +39,8 @@ export function Footer() {
         <div>
           <p className="text-sm font-semibold text-surface">Hubungi Kami</p>
           <ul className="mt-3 space-y-2 text-sm text-primary-200">
-            <li>Setiap hari, 06:00 – 23:00 WIB</li>
-            <li>concierge@pitchandco.id</li>
+            <li>Setiap hari, 08:00 – 23:00 WIB</li>
+            <li>info@noelfutsal.id</li>
             <li className="text-xs text-primary-300">Pembayaran aman via Midtrans</li>
           </ul>
         </div>
@@ -67,12 +67,12 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-primary-900 px-4 py-4">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 text-xs text-primary-300 sm:px-6">
-          <span>&copy; {CURRENT_YEAR} Pitch &amp; Co. Seluruh hak cipta dilindungi.</span>
-          <span className="font-mono tracking-wider uppercase text-gold-300/80">
-            FIFA Quality Pro Standard
-          </span>
+      <div className="bg-primary-900/50 px-4 py-4 sm:px-6 lg:px-10 xl:px-14 2xl:px-16">
+        <div className="flex w-full flex-wrap items-center justify-between gap-2 text-xs text-primary-300">
+          <span>&copy; {CURRENT_YEAR} Noel Futsal. Seluruh hak cipta dilindungi.</span>
+<span className="text-sm text-gold-300/80">
+             FIFA Quality Pro Standard
+           </span>
         </div>
       </div>
     </footer>

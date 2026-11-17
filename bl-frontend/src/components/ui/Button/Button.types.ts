@@ -8,4 +8,5 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize
   loading?: boolean
   fullWidth?: boolean
+  asChild?: boolean
 }

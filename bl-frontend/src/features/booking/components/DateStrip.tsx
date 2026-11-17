@@ -43,7 +43,10 @@ export function DateStrip({
     <div
       role="listbox"
       aria-label="Pilih tanggal booking"
-      className={cn('flex gap-2 overflow-x-auto pb-2', className)}
+      className={cn(
+        'flex gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]',
+        className,
+      )}
     >
       {days.map((item) => {
         const isSelected = item.ymd === selectedDate

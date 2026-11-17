@@ -17,6 +17,7 @@ type Repository interface {
 	CreateUser(ctx context.Context, user *User) error
 	FindUserByEmail(ctx context.Context, email string) (*User, error)
 	FindUserByID(ctx context.Context, id uint) (*User, error)
+	FindFirstActiveOwnerID(ctx context.Context) (uint, error)
 	MarkUserVerified(ctx context.Context, userID uint, verifiedAt time.Time) error
 	UpdateUserProfile(ctx context.Context, userID uint, name, phone string) error
 	UpdateUserPassword(ctx context.Context, userID uint, passwordHash string) error
@@ -81,6 +82,22 @@ func (r *gormRepository) FindUserByID(ctx context.Context, id uint) (*User, erro
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (r *gormRepository) FindFirstActiveOwnerID(ctx context.Context) (uint, error) {
+	var user User
+	err := r.db.WithContext(ctx).
+		Select("id").
+		Where("role = ? AND is_active = ? AND deleted_at IS NULL", constant.RoleOwner, true).
+		Order("id ASC").
+		First(&user).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+	return user.ID, nil
 }
 
 func (r *gormRepository) MarkUserVerified(ctx context.Context, userID uint, verifiedAt time.Time) error {

@@ -3,9 +3,11 @@ import type { ApiResponse } from '@/types/api.types'
 import type {
   AuthTokensResponse,
   AuthUser,
+  ChangePasswordRequest,
   LoginRequest,
   RegisterRequest,
   ResendOTPRequest,
+  UpdateProfileRequest,
   VerifyOTPRequest,
 } from '../types/auth.types'
 
@@ -40,5 +42,14 @@ export const authApi = {
   async me(): Promise<AuthUser> {
     const { data } = await http.get<ApiResponse<AuthUser>>('/auth/me')
     return data.data
+  },
+
+  async updateProfile(payload: UpdateProfileRequest): Promise<AuthUser> {
+    const { data } = await http.put<ApiResponse<AuthUser>>('/users/me', payload)
+    return data.data
+  },
+
+  async changePassword(payload: ChangePasswordRequest): Promise<void> {
+    await http.put<ApiResponse<null>>('/users/me/password', payload)
   },
 }

@@ -25,6 +25,17 @@ func Run() error {
 	}
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	migrationDB, err := database.OpenMigrationDB(cfg.DB, cfg.App.TZ)
+	if err != nil {
+		return err
+	}
+	if err := database.RunMigrations(migrationDB, "up", 0); err != nil {
+		_ = migrationDB.Close()
+		return fmt.Errorf("run migrations: %w", err)
+	}
+	_ = migrationDB.Close()
+	logger.Info("database migrations applied")
+
 	db, err := database.OpenMySQL(cfg.DB, cfg.App.TZ)
 	if err != nil {
 		return err
@@ -34,9 +45,11 @@ func Run() error {
 	redisClient := database.OpenRedis(cfg.Redis)
 	defer closeRedis(redisClient, logger)
 
+	router, scheduler := newRouter(db, redisClient, cfg, logger)
+
 	server := &http.Server{
 		Addr:              ":" + cfg.App.Port,
-		Handler:           middleware.Logger(logger, middleware.Recovery(logger, middleware.CORS(cfg.CORS.AllowedOrigins, newRouter(db, redisClient, cfg)))),
+		Handler:           middleware.Logger(logger, middleware.Recovery(logger, middleware.CORS(cfg.CORS.AllowedOrigins, router))),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      15 * time.Second,
@@ -45,6 +58,9 @@ func Run() error {
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+
+	scheduler.Start(ctx)
+	defer scheduler.Stop()
 
 	serverErr := make(chan error, 1)
 	go func() {

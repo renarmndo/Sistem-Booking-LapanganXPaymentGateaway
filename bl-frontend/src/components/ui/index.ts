@@ -1,5 +1,15 @@
 export { Badge } from './Badge'
 export type { BadgeProps, BadgeSize, BadgeVariant } from './Badge'
+export {
+  Breadcrumb,
+  BreadcrumbEllipsis,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from './Breadcrumb'
+export type { BreadcrumbLinkProps, BreadcrumbProps } from './Breadcrumb'
 export { Button } from './Button'
 export type { ButtonProps, ButtonSize, ButtonVariant } from './Button'
 export { Card, CardBody, CardFooter, CardHeader } from './Card'

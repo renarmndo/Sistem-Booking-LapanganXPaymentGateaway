@@ -17,6 +17,9 @@ export const PATHS = {
 
   ADMIN_DASHBOARD: '/admin',
   ADMIN_FIELDS: '/admin/lapangan',
+  ADMIN_FIELD_NEW: '/admin/lapangan/baru',
+  ADMIN_FIELD_EDIT: (id: number | string = ':id') => `/admin/lapangan/${id}`,
+  ADMIN_FACILITIES: '/admin/fasilitas',
   ADMIN_SCHEDULES: '/admin/jadwal',
   ADMIN_BOOKINGS: '/admin/booking',
   ADMIN_OFFLINE_BOOKING: '/admin/booking/baru',

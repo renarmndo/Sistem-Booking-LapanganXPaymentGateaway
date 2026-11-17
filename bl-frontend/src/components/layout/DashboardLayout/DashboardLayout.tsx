@@ -1,9 +1,9 @@
 import { useState, type ReactNode } from 'react'
-import { LayoutDashboard, Menu, X } from 'lucide-react'
+import { LayoutDashboard, LogOut, Menu, X } from 'lucide-react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { PATHS } from '@/app/router/paths'
-import { Badge } from '@/components/ui'
-import { useAuthStore } from '@/features/auth'
+import { Badge, Button } from '@/components/ui'
+import { useAuth } from '@/features/auth'
 import { cn } from '@/utils/cn'
 
 export interface DashboardNavItem {
@@ -11,6 +11,7 @@ export interface DashboardNavItem {
   label: string
   icon?: ReactNode
   end?: boolean
+  badge?: number
 }
 
 export interface DashboardLayoutProps {
@@ -21,14 +22,15 @@ export interface DashboardLayoutProps {
 
 export function DashboardLayout({ panelTitle, navItems, children }: DashboardLayoutProps) {
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const user = useAuthStore((s) => s.user)
-  const role = useAuthStore((s) => s.role)
+  const { user, role, logout, isLoggingOut } = useAuth()
+  const userInitial = (user?.name?.trim()?.[0] ?? 'N').toUpperCase()
+  const roleLabel = role === 'admin' ? 'Petugas' : role === 'owner' ? 'Owner' : role?.toUpperCase()
 
   const sidebarContent = (
     <div className="flex h-full flex-col bg-primary-950 text-primary-100">
       <div className="flex h-16 items-center justify-between border-b border-primary-900 px-5">
         <Link to={PATHS.HOME} className="font-display text-lg font-bold text-surface">
-          ArenaKick
+          Noel Futsal
         </Link>
         <button
           type="button"
@@ -41,7 +43,7 @@ export function DashboardLayout({ panelTitle, navItems, children }: DashboardLay
       </div>
 
       <div className="px-4 py-3">
-        <p className="font-mono text-[11px] tracking-wider text-primary-300 uppercase">
+        <p className="text-xs font-medium text-primary-300">
           {panelTitle}
         </p>
       </div>
@@ -63,7 +65,12 @@ export function DashboardLayout({ panelTitle, navItems, children }: DashboardLay
             }
           >
             {item.icon ?? <LayoutDashboard className="h-4 w-4 shrink-0" aria-hidden="true" />}
-            <span>{item.label}</span>
+            <span className="flex-1 truncate">{item.label}</span>
+            {item.badge !== undefined && item.badge > 0 && (
+              <Badge variant="warning" size="sm">
+                {item.badge}
+              </Badge>
+            )}
           </NavLink>
         ))}
       </nav>
@@ -100,20 +107,36 @@ export function DashboardLayout({ panelTitle, navItems, children }: DashboardLay
           </div>
 
           <div className="flex items-center gap-3">
-            {role && (
-              <Badge variant={role === 'admin' ? 'primary' : 'gold'} size="sm">
-                {role.toUpperCase()}
-              </Badge>
-            )}
-            <span className="hidden text-sm font-medium text-fg sm:inline">
-              {user?.name ?? 'Pengguna'}
-            </span>
-            <Link
-              to={PATHS.HOME}
-              className="text-xs font-semibold text-primary-700 hover:underline"
+            <div className="flex items-center gap-2.5 rounded-full border border-line bg-surface-alt/70 py-1 pr-3 pl-1.5">
+              <span
+                aria-hidden="true"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-900 text-xs font-bold text-surface"
+              >
+                {userInitial}
+              </span>
+              <span className="hidden text-sm font-semibold text-ink sm:inline">
+                {user?.name ?? 'Pengguna'}
+              </span>
+              {roleLabel && (
+                <Badge variant={role === 'admin' ? 'primary' : 'gold'} size="sm">
+                  {roleLabel}
+                </Badge>
+              )}
+            </div>
+
+            <span aria-hidden="true" className="hidden h-5 w-px bg-line sm:block" />
+
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              loading={isLoggingOut}
+              onClick={logout}
+              aria-label="Keluar dari akun"
             >
-              Situs Publik
-            </Link>
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">Keluar</span>
+            </Button>
           </div>
         </header>
 

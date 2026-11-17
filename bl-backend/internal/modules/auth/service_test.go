@@ -73,6 +73,20 @@ func (m *memRepo) FindUserByID(_ context.Context, id uint) (*User, error) {
 	return &cp, nil
 }
 
+func (m *memRepo) FindFirstActiveOwnerID(_ context.Context) (uint, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	var minID uint
+	for id, u := range m.users {
+		if u.DeletedAt == nil && u.IsActive && u.Role == constant.RoleOwner {
+			if minID == 0 || id < minID {
+				minID = id
+			}
+		}
+	}
+	return minID, nil
+}
+
 func (m *memRepo) MarkUserVerified(_ context.Context, userID uint, verifiedAt time.Time) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()

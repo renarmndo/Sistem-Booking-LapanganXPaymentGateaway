@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/url"
 	"time"
@@ -12,8 +13,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func OpenMySQL(cfg config.DBConfig, location *time.Location) (*gorm.DB, error) {
-	connection := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=%s",
+func MySQLDSN(cfg config.DBConfig, location *time.Location) string {
+	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&multiStatements=true&loc=%s",
 		cfg.User,
 		cfg.Password,
 		cfg.Host,
@@ -21,6 +22,18 @@ func OpenMySQL(cfg config.DBConfig, location *time.Location) (*gorm.DB, error) {
 		cfg.Name,
 		url.QueryEscape(location.String()),
 	)
+}
+
+func OpenMigrationDB(cfg config.DBConfig, location *time.Location) (*sql.DB, error) {
+	sqlDB, err := sql.Open("mysql", MySQLDSN(cfg, location))
+	if err != nil {
+		return nil, fmt.Errorf("open migration mysql: %w", err)
+	}
+	return sqlDB, nil
+}
+
+func OpenMySQL(cfg config.DBConfig, location *time.Location) (*gorm.DB, error) {
+	connection := MySQLDSN(cfg, location)
 
 	db, err := gorm.Open(mysql.Open(connection), &gorm.Config{})
 	if err != nil {

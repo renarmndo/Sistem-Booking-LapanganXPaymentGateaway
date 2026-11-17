@@ -16,4 +16,5 @@ var (
 	ErrAlreadyVerified      = apperror.Conflict("ALREADY_VERIFIED", "Akun sudah terverifikasi")
 	ErrUserNotFound         = apperror.NotFound("USER_NOT_FOUND", "Pengguna tidak ditemukan")
 	ErrWrongCurrentPassword = apperror.BadRequest("INVALID_CURRENT_PASSWORD", "Kata sandi saat ini salah")
+	ErrCannotModifySelf     = apperror.Unprocessable("CANNOT_MODIFY_SELF", "Admin tidak dapat menonaktifkan atau menurunkan peran akunnya sendiri")
 )

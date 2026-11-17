@@ -1,0 +1,20 @@
+CREATE TABLE refund_requests (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    booking_id BIGINT UNSIGNED NOT NULL,
+    payment_id BIGINT UNSIGNED NOT NULL,
+    amount BIGINT NOT NULL,
+    status ENUM('pending', 'processed', 'rejected') NOT NULL DEFAULT 'pending',
+    reason VARCHAR(255) NULL,
+    processed_by BIGINT UNSIGNED NULL,
+    processed_at DATETIME(6) NULL,
+    note VARCHAR(255) NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (id),
+    KEY idx_refund_requests_booking_id (booking_id),
+    KEY idx_refund_requests_payment_id (payment_id),
+    KEY idx_refund_requests_status (status),
+    CONSTRAINT fk_refund_requests_booking_id FOREIGN KEY (booking_id) REFERENCES bookings (id) ON DELETE CASCADE,
+    CONSTRAINT fk_refund_requests_payment_id FOREIGN KEY (payment_id) REFERENCES payments (id) ON DELETE CASCADE,
+    CONSTRAINT fk_refund_requests_processed_by FOREIGN KEY (processed_by) REFERENCES users (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

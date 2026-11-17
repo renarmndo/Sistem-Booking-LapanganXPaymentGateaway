@@ -37,3 +37,13 @@ export interface VerifyOTPRequest {
 export interface ResendOTPRequest {
   email: string
 }
+
+export interface UpdateProfileRequest {
+  name: string
+  phone: string
+}
+
+export interface ChangePasswordRequest {
+  current_password: string
+  new_password: string
+}

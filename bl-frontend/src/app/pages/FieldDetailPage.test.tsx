@@ -4,6 +4,7 @@ import { http as mswHttp, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { ToastProvider } from '@/components/ui'
 import { FieldDetailPage } from './FieldDetailPage'
 
 const server = setupServer()
@@ -69,11 +70,13 @@ describe('FieldDetailPage', () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(
       <QueryClientProvider client={client}>
-        <MemoryRouter initialEntries={['/lapangan/1']}>
-          <Routes>
-            <Route path="/lapangan/:id" element={<FieldDetailPage />} />
-          </Routes>
-        </MemoryRouter>
+        <ToastProvider>
+          <MemoryRouter initialEntries={['/lapangan/1']}>
+            <Routes>
+              <Route path="/lapangan/:id" element={<FieldDetailPage />} />
+            </Routes>
+          </MemoryRouter>
+        </ToastProvider>
       </QueryClientProvider>,
     )
 
@@ -84,6 +87,8 @@ describe('FieldDetailPage', () => {
 
     const availableSlot = screen.getByRole('button', { name: /19:00/i })
     expect(availableSlot).toBeEnabled()
+    fireEvent.click(availableSlot)
+    expect(screen.getByText(/1 jam \(19:00 – 20:00\)/i)).toBeInTheDocument()
 
     // Click second date option in DateStrip
     const dateOptions = screen.getAllByRole('option')

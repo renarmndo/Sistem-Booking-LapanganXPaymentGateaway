@@ -25,7 +25,7 @@ export function FieldCard({
       padding="none"
       interactive
       className={cn(
-        'group flex overflow-hidden',
+        'group flex h-full overflow-hidden',
         isResponsive ? 'flex-row sm:flex-col' : 'flex-col',
         className,
       )}
@@ -40,7 +40,7 @@ export function FieldCard({
         <div
           className={cn(
             'relative overflow-hidden bg-primary-950',
-            isResponsive ? 'h-full min-h-32 sm:aspect-[4/3] sm:h-auto' : 'aspect-[4/3] w-full',
+            isResponsive ? 'h-full min-h-32 sm:h-48 sm:w-full' : 'h-48 w-full',
           )}
         >
           {field.cover_url ? (

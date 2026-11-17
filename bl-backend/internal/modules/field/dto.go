@@ -57,14 +57,14 @@ type OperatingHourInput struct {
 }
 
 type CreateFieldRequest struct {
-	OwnerID        uint                 `json:"owner_id" validate:"required,gt=0"`
+	OwnerID        uint                 `json:"owner_id" validate:"omitempty,gt=0"`
 	Name           string               `json:"name" validate:"required,min=2,max=150"`
 	Slug           string               `json:"slug" validate:"omitempty,max=180"`
 	Description    string               `json:"description"`
 	SurfaceType    string               `json:"surface_type" validate:"required,min=2,max=50"`
 	Capacity       uint                 `json:"capacity" validate:"required,gt=0"`
-	Address        string               `json:"address" validate:"required,min=5,max=255"`
-	City           string               `json:"city" validate:"required,min=2,max=100"`
+	Address        string               `json:"address" validate:"omitempty,max=255"`
+	City           string               `json:"city" validate:"omitempty,max=100"`
 	Latitude       *float64             `json:"latitude"`
 	Longitude      *float64             `json:"longitude"`
 	IsActive       *bool                `json:"is_active"`
@@ -81,8 +81,8 @@ type UpdateFieldRequest struct {
 	Description    string               `json:"description"`
 	SurfaceType    string               `json:"surface_type" validate:"required,min=2,max=50"`
 	Capacity       uint                 `json:"capacity" validate:"required,gt=0"`
-	Address        string               `json:"address" validate:"required,min=5,max=255"`
-	City           string               `json:"city" validate:"required,min=2,max=100"`
+	Address        string               `json:"address" validate:"omitempty,max=255"`
+	City           string               `json:"city" validate:"omitempty,max=100"`
 	Latitude       *float64             `json:"latitude"`
 	Longitude      *float64             `json:"longitude"`
 	IsActive       *bool                `json:"is_active"`

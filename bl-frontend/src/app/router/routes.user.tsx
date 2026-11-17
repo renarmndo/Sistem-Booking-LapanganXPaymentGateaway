@@ -5,7 +5,11 @@ import { ProtectedRoute } from '@/app/router/ProtectedRoute'
 import { PublicLayout } from '@/components/layout'
 import { PageLoader } from '@/components/shared'
 
-const PlaceholderPage = lazy(() => import('@/app/pages/PlaceholderPage'))
+const AccountPage = lazy(() => import('@/features/auth/pages/AccountPage'))
+const CheckoutPage = lazy(() => import('@/features/booking/pages/CheckoutPage'))
+const PaymentStatusPage = lazy(() => import('@/features/booking/pages/PaymentStatusPage'))
+const MyBookingsPage = lazy(() => import('@/features/booking/pages/MyBookingsPage'))
+const BookingDetailPage = lazy(() => import('@/features/booking/pages/BookingDetailPage'))
 
 function withSuspense(node: ReactNode) {
   return <Suspense fallback={<PageLoader />}>{node}</Suspense>
@@ -20,23 +24,23 @@ export const userRoutes: RouteObject[] = [
         children: [
           {
             path: PATHS.CHECKOUT,
-            element: withSuspense(<PlaceholderPage title="Ringkasan & Pembayaran" />),
+            element: withSuspense(<CheckoutPage />),
           },
           {
             path: PATHS.PAYMENT_STATUS(),
-            element: withSuspense(<PlaceholderPage title="Status Pembayaran" />),
+            element: withSuspense(<PaymentStatusPage />),
           },
           {
             path: PATHS.MY_BOOKINGS,
-            element: withSuspense(<PlaceholderPage title="Booking Saya" />),
+            element: withSuspense(<MyBookingsPage />),
           },
           {
             path: PATHS.BOOKING_DETAIL(),
-            element: withSuspense(<PlaceholderPage title="Detail Booking" />),
+            element: withSuspense(<BookingDetailPage />),
           },
           {
             path: PATHS.ACCOUNT,
-            element: withSuspense(<PlaceholderPage title="Profil Akun" />),
+            element: withSuspense(<AccountPage />),
           },
         ],
       },

@@ -1,9 +1,16 @@
-import type { ReactNode } from 'react'
-import { ArrowLeft, ChevronRight } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Fragment, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui'
 import { cn } from '@/utils/cn'
 
-export interface BreadcrumbItem {
+export interface BreadcrumbEntry {
   label: string
   to?: string
 }
@@ -11,8 +18,7 @@ export interface BreadcrumbItem {
 export interface PageHeaderProps {
   title: string
   subtitle?: string
-  breadcrumbs?: BreadcrumbItem[]
-  showBack?: boolean
+  breadcrumbs?: BreadcrumbEntry[]
   actions?: ReactNode
   className?: string
 }
@@ -21,50 +27,48 @@ export function PageHeader({
   title,
   subtitle,
   breadcrumbs,
-  showBack = false,
   actions,
   className,
 }: PageHeaderProps) {
-  const navigate = useNavigate()
-
   return (
-    <div className={cn('space-y-2', className)}>
+    <header className={cn('space-y-2.5', className)}>
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <nav aria-label="Breadcrumb" className="hidden items-center gap-1.5 text-xs text-fg-muted sm:flex">
-          {breadcrumbs.map((item, index) => (
-            <span key={item.label} className="flex items-center gap-1.5">
-              {index > 0 && <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />}
-              {item.to ? (
-                <Link to={item.to} className="hover:text-primary-700">
-                  {item.label}
-                </Link>
-              ) : (
-                <span className="font-medium text-fg">{item.label}</span>
-              )}
-            </span>
-          ))}
-        </nav>
+        <Breadcrumb>
+          <BreadcrumbList>
+            {breadcrumbs.map((item, index) => {
+              const isLast = index === breadcrumbs.length - 1
+              return (
+                <Fragment key={`${item.label}-${index}`}>
+                  {index > 0 && <BreadcrumbSeparator />}
+                  <BreadcrumbItem className="max-w-full">
+                    {item.to && !isLast ? (
+                      <BreadcrumbLink asChild>
+                        <Link to={item.to} className="max-w-[140px] truncate sm:max-w-none">
+                          {item.label}
+                        </Link>
+                      </BreadcrumbLink>
+                    ) : (
+                      <BreadcrumbPage className="max-w-[200px] truncate sm:max-w-none">
+                        {item.label}
+                      </BreadcrumbPage>
+                    )}
+                  </BreadcrumbItem>
+                </Fragment>
+              )
+            })}
+          </BreadcrumbList>
+        </Breadcrumb>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          {showBack && (
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              aria-label="Kembali"
-              className="flex h-9 w-9 items-center justify-center rounded-md border border-line bg-surface text-fg hover:bg-surface-alt sm:hidden"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-          )}
-          <div>
-            <h1 className="font-display text-2xl font-bold text-ink sm:text-3xl">{title}</h1>
-            {subtitle && <p className="mt-1 text-sm text-fg-muted">{subtitle}</p>}
-          </div>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+            {title}
+          </h1>
+          {subtitle && <p className="mt-1 text-sm text-fg-muted sm:text-base">{subtitle}</p>}
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
-    </div>
+    </header>
   )
 }

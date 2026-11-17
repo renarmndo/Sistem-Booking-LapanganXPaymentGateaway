@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Menu, X } from 'lucide-react'
+import { History, LogOut, Menu, User, X } from 'lucide-react'
 import { Link, NavLink } from 'react-router-dom'
 import { PATHS } from '@/app/router/paths'
 import { Button } from '@/components/ui'
@@ -44,28 +44,19 @@ export function Navbar({
         'z-40 w-full transition-colors duration-200',
         transparentOverHero ? 'fixed inset-x-0 top-0' : 'sticky top-0',
         isTransparent
-          ? 'border-b border-transparent bg-transparent text-surface'
-          : 'border-b border-line bg-surface/95 text-fg shadow-xs backdrop-blur-sm',
+          ? 'text-surface border-b border-transparent bg-transparent'
+          : 'border-line bg-surface/95 text-fg border-b shadow-xs backdrop-blur-sm',
       )}
     >
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:h-16 sm:px-6">
+      <div className="flex h-14 w-full items-center justify-between px-4 sm:h-16 sm:px-6 lg:px-10 xl:px-14 2xl:px-16">
         <Link
           to={PATHS.HOME}
           className={cn(
-            'flex items-center gap-2 font-display text-xl font-bold tracking-tight',
+            'font-display flex items-center gap-2 text-xl font-bold tracking-tight',
             isTransparent ? 'text-surface' : 'text-primary-950',
           )}
         >
-          <span
-            aria-hidden="true"
-            className={cn(
-              'flex h-7 w-7 items-center justify-center rounded-sm text-xs font-bold',
-              isTransparent ? 'bg-gold-500 text-ink' : 'bg-primary-950 text-gold-300',
-            )}
-          >
-            P
-          </span>
-          <span>Pitch &amp; Co.</span>
+          <span>Noel Futsal</span>
         </Link>
 
         <nav aria-label="Navigasi utama" className="hidden items-center gap-6 md:flex">
@@ -90,28 +81,9 @@ export function Navbar({
               {item.label}
             </NavLink>
           ))}
-          {isAuthenticated && (
-            <NavLink
-              to={PATHS.MY_BOOKINGS}
-              className={({ isActive }) =>
-                cn(
-                  'text-sm font-medium transition-colors',
-                  isTransparent
-                    ? isActive
-                      ? 'text-gold-300'
-                      : 'text-surface/85 hover:text-surface'
-                    : isActive
-                      ? 'text-primary-700'
-                      : 'text-fg-muted hover:text-fg',
-                )
-              }
-            >
-              Booking Saya
-            </NavLink>
-          )}
         </nav>
 
-        <div className="hidden items-center gap-2.5 md:flex">
+        <div className="hidden items-center gap-2 md:flex">
           {isAuthenticated ? (
             <>
               {dashboardPath && (
@@ -121,20 +93,40 @@ export function Navbar({
                   </Button>
                 </Link>
               )}
-              <Link to={PATHS.ACCOUNT}>
+              <Link
+                to={PATHS.MY_BOOKINGS}
+                aria-label="History Booking"
+                title="History Booking"
+                className={cn(
+                  'inline-flex h-9 w-9 items-center justify-center rounded-md border transition-colors',
+                  isTransparent
+                    ? 'border-surface/25 bg-surface/10 text-surface hover:bg-surface/20'
+                    : 'border-line bg-surface text-fg hover:bg-surface-alt hover:text-primary-700',
+                )}
+              >
+                <History className="h-4 w-4" aria-hidden="true" />
+              </Link>
+              <Link to={PATHS.ACCOUNT} title="Profil Akun">
                 <Button variant={isTransparent ? 'accent' : 'primary'} size="sm">
-                  {userName ? userName.split(' ')[0] : 'Akun'}
+                  <User className="h-4 w-4" aria-hidden="true" />
+                  <span>{userName ? userName.split(' ')[0] : 'Akun'}</span>
                 </Button>
               </Link>
               {onLogout && (
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <button
+                  type="button"
                   onClick={onLogout}
-                  className={isTransparent ? 'text-surface hover:bg-surface/10' : undefined}
+                  aria-label="Keluar"
+                  title="Keluar"
+                  className={cn(
+                    'inline-flex h-9 w-9 items-center justify-center rounded-md border transition-colors',
+                    isTransparent
+                      ? 'border-surface/25 bg-surface/10 text-surface hover:bg-surface/20'
+                      : 'border-line bg-surface text-fg-muted hover:bg-danger-soft hover:text-danger',
+                  )}
                 >
-                  Keluar
-                </Button>
+                  <LogOut className="h-4 w-4" aria-hidden="true" />
+                </button>
               )}
             </>
           ) : (
@@ -172,7 +164,7 @@ export function Navbar({
       </div>
 
       {menuOpen && (
-        <div className="border-t border-line bg-surface px-4 py-4 text-fg md:hidden">
+        <div className="border-line bg-surface text-fg border-t px-4 py-4 md:hidden">
           <nav aria-label="Menu mobile" className="flex flex-col gap-2">
             {NAV_LINKS.map((item) => (
               <NavLink
@@ -190,13 +182,43 @@ export function Navbar({
                 {item.label}
               </NavLink>
             ))}
-            <div className="mt-2 flex gap-2 border-t border-line pt-3">
+            {isAuthenticated && (
+              <NavLink
+                to={PATHS.MY_BOOKINGS}
+                onClick={() => setMenuOpen(false)}
+                className={({ isActive }) =>
+                  cn(
+                    'rounded-md px-3 py-2 text-sm font-medium',
+                    isActive ? 'bg-primary-50 text-primary-700' : 'text-fg hover:bg-surface-alt',
+                  )
+                }
+              >
+                History Booking
+              </NavLink>
+            )}
+            <div className="border-line mt-2 flex gap-2 border-t pt-3">
               {isAuthenticated ? (
-                <Link to={PATHS.ACCOUNT} className="w-full" onClick={() => setMenuOpen(false)}>
-                  <Button fullWidth size="sm">
-                    {userName ? `Akun (${userName.split(' ')[0]})` : 'Akun Saya'}
-                  </Button>
-                </Link>
+                <div className="flex w-full items-center gap-2">
+                  <Link to={PATHS.ACCOUNT} className="flex-1" onClick={() => setMenuOpen(false)}>
+                    <Button fullWidth size="sm">
+                      <User className="h-4 w-4" aria-hidden="true" />
+                      <span>{userName ? userName.split(' ')[0] : 'Akun Saya'}</span>
+                    </Button>
+                  </Link>
+                  {onLogout && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        setMenuOpen(false)
+                        onLogout()
+                      }}
+                    >
+                      <LogOut className="h-4 w-4" aria-hidden="true" />
+                      <span>Keluar</span>
+                    </Button>
+                  )}
+                </div>
               ) : (
                 <>
                   <Link to={PATHS.LOGIN} className="flex-1" onClick={() => setMenuOpen(false)}>

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { ToastProvider, useToast } from './index'
 
@@ -11,8 +11,8 @@ function ToastTrigger() {
   )
 }
 
-describe('ToastProvider', () => {
-  it('shows and dismisses toast notifications', () => {
+describe('ToastProvider (Sonner)', () => {
+  it('shows sonner toast notifications', async () => {
     render(
       <ToastProvider>
         <ToastTrigger />
@@ -20,9 +20,10 @@ describe('ToastProvider', () => {
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'Tampilkan Toast' }))
-    expect(screen.getByRole('status')).toHaveTextContent('Berhasil disimpan')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Tutup notifikasi' }))
-    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('Sukses')).toBeInTheDocument()
+      expect(screen.getByText('Berhasil disimpan')).toBeInTheDocument()
+    })
   })
 })

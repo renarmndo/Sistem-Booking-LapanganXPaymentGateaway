@@ -10,6 +10,8 @@ func ToUserResponse(u *User) UserResponse {
 		Email:              u.Email,
 		Phone:              u.Phone,
 		Role:               string(u.Role),
+		IsActive:           u.IsActive,
 		VerificationStatus: string(u.VerificationStatus),
+		CreatedAt:          u.CreatedAt,
 	}
 }

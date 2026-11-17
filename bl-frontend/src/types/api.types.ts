@@ -20,7 +20,7 @@ export interface ApiError {
 
 export interface PaginationMeta {
   page: number
-  per_page: number
+  limit: number
   total: number
   total_pages: number
 }

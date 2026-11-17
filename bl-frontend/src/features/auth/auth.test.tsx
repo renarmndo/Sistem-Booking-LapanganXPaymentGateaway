@@ -139,6 +139,7 @@ describe('Auth flow (Register, OTP, Login, Session Restore)', () => {
   })
 
   it('restores session via /auth/refresh on mount', async () => {
+    window.localStorage.setItem('bl_has_session', '1')
     server.use(
       mswHttp.post('/api/v1/auth/refresh', () =>
         HttpResponse.json({

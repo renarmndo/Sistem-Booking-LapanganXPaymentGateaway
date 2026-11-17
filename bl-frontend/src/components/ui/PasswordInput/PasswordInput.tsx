@@ -1,21 +1,25 @@
-import { useState } from 'react'
+import { forwardRef, useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { Input } from '../Input'
 import type { PasswordInputProps } from './PasswordInput.types'
 
-export function PasswordInput({
-  error = false,
-  showLabel = 'Tampilkan kata sandi',
-  hideLabel = 'Sembunyikan kata sandi',
-  className,
-  ...rest
-}: PasswordInputProps) {
+export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(function PasswordInput(
+  {
+    error = false,
+    showLabel = 'Tampilkan kata sandi',
+    hideLabel = 'Sembunyikan kata sandi',
+    className,
+    ...rest
+  },
+  ref,
+) {
   const [visible, setVisible] = useState(false)
 
   return (
     <div className="relative">
       <Input
+        ref={ref}
         type={visible ? 'text' : 'password'}
         error={error}
         className={cn('pr-11', className)}
@@ -32,4 +36,4 @@ export function PasswordInput({
       </button>
     </div>
   )
-}
+})

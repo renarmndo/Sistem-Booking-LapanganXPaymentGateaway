@@ -1,3 +1,4 @@
+import { Ban, CalendarX2, Check, CheckCircle2, Clock, Lock } from 'lucide-react'
 import { CurrencyText } from '@/components/shared'
 import { Badge } from '@/components/ui'
 import { cn } from '@/utils/cn'
@@ -9,15 +10,19 @@ export interface SlotItemProps {
   price: number
   status: SlotStatus
   selected?: boolean
+  highlighted?: boolean
   onToggle?: () => void
 }
 
-const STATUS_LABELS: Record<SlotStatus, string> = {
-  available: 'Tersedia',
-  past: 'Lewat',
-  locked: 'Diproses',
-  booked: 'Terisi',
-  blocked: 'Tutup',
+const STATUS_META: Record<
+  SlotStatus,
+  { label: string; icon: typeof CheckCircle2 }
+> = {
+  available: { label: 'Tersedia', icon: CheckCircle2 },
+  past: { label: 'Lewat', icon: Clock },
+  locked: { label: 'Diproses', icon: Lock },
+  booked: { label: 'Terisi', icon: CalendarX2 },
+  blocked: { label: 'Tutup', icon: Ban },
 }
 
 export function SlotItem({
@@ -26,9 +31,12 @@ export function SlotItem({
   price,
   status,
   selected = false,
+  highlighted = false,
   onToggle,
 }: SlotItemProps) {
   const disabled = status !== 'available'
+  const meta = STATUS_META[status]
+  const StatusIcon = selected ? Check : meta.icon
 
   return (
     <button
@@ -37,18 +45,19 @@ export function SlotItem({
       aria-pressed={selected}
       onClick={onToggle}
       className={cn(
-        'flex min-h-[76px] flex-col justify-between rounded-md border p-3 text-left transition',
+        'flex min-h-[78px] flex-col justify-between rounded-md border p-3 text-left transition duration-200',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300',
+        highlighted && 'ring-2 ring-gold-400 ring-offset-1 animate-pulse',
         selected
           ? 'border-primary-950 bg-primary-950 text-surface shadow-sm'
           : status === 'available'
             ? 'border-line-strong bg-surface text-fg hover:border-primary-600 hover:bg-primary-50/40'
             : status === 'booked'
-              ? 'pattern-hatch cursor-not-allowed border-line bg-surface-alt text-fg-muted opacity-80'
+              ? 'pattern-hatch cursor-not-allowed border-line bg-surface-alt text-fg-muted opacity-85'
               : status === 'blocked'
-                ? 'pattern-blocked cursor-not-allowed border-line bg-surface-alt text-fg-muted opacity-80'
+                ? 'pattern-blocked cursor-not-allowed border-line bg-surface-alt text-fg-muted opacity-85'
                 : status === 'locked'
-                  ? 'cursor-not-allowed border-warning/40 bg-warning-soft/50 text-warning-ink'
+                  ? 'border-dashed border-warning/60 bg-warning-soft/50 text-warning-ink cursor-not-allowed'
                   : 'cursor-not-allowed border-line bg-surface-alt text-fg-subtle opacity-60',
       )}
     >
@@ -68,7 +77,8 @@ export function SlotItem({
                   : 'neutral'
           }
         >
-          {selected ? 'Dipilih' : STATUS_LABELS[status]}
+          <StatusIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
+          <span>{selected ? 'Dipilih' : meta.label}</span>
         </Badge>
       </div>
 

@@ -20,11 +20,16 @@ import (
 	"sistem-booking/pkg/timeutil"
 )
 
-const fieldsListCacheTTL = 5 * time.Minute
+const (
+	fieldsListCacheTTL  = 5 * time.Minute
+	defaultVenueAddress = "Noel Futsal Arena"
+	defaultVenueCity    = "Jakarta"
+)
 
 // OwnerChecker verifies that a given user ID belongs to an active owner account.
 type OwnerChecker interface {
 	IsOwnerUser(ctx context.Context, userID uint) (bool, error)
+	DefaultOwnerID(ctx context.Context) (uint, error)
 }
 
 // UpcomingBookingCounter counts upcoming bookings for a field when deactivating.
@@ -99,7 +104,15 @@ func NewServiceWithDeps(
 }
 
 func (s *service) Create(ctx context.Context, req CreateFieldRequest) (*FieldDetailResponse, error) {
-	if err := s.validateOwner(ctx, req.OwnerID); err != nil {
+	ownerID := req.OwnerID
+	if ownerID == 0 && s.ownerChecker != nil {
+		resolvedID, err := s.ownerChecker.DefaultOwnerID(ctx)
+		if err != nil {
+			return nil, apperror.Internal("DB_ERROR", "Gagal menentukan owner Noel Futsal", err)
+		}
+		ownerID = resolvedID
+	}
+	if err := s.validateOwner(ctx, ownerID); err != nil {
 		return nil, err
 	}
 
@@ -127,15 +140,24 @@ func (s *service) Create(ctx context.Context, req CreateFieldRequest) (*FieldDet
 		isActive = *req.IsActive
 	}
 
+	address := strings.TrimSpace(req.Address)
+	if address == "" {
+		address = defaultVenueAddress
+	}
+	city := strings.TrimSpace(req.City)
+	if city == "" {
+		city = defaultVenueCity
+	}
+
 	entity := &Field{
-		OwnerID:     req.OwnerID,
+		OwnerID:     ownerID,
 		Name:        strings.TrimSpace(req.Name),
 		Slug:        slug,
 		Description: strings.TrimSpace(req.Description),
 		SurfaceType: strings.TrimSpace(req.SurfaceType),
 		Capacity:    req.Capacity,
-		Address:     strings.TrimSpace(req.Address),
-		City:        strings.TrimSpace(req.City),
+		Address:     address,
+		City:        city,
 		Latitude:    req.Latitude,
 		Longitude:   req.Longitude,
 		IsActive:    isActive,
@@ -211,14 +233,29 @@ func (s *service) Update(ctx context.Context, id uint, req UpdateFieldRequest) (
 		isActive = *req.IsActive
 	}
 
+	address := strings.TrimSpace(req.Address)
+	if address == "" {
+		address = existing.Address
+		if address == "" {
+			address = defaultVenueAddress
+		}
+	}
+	city := strings.TrimSpace(req.City)
+	if city == "" {
+		city = existing.City
+		if city == "" {
+			city = defaultVenueCity
+		}
+	}
+
 	existing.OwnerID = ownerID
 	existing.Name = strings.TrimSpace(req.Name)
 	existing.Slug = slug
 	existing.Description = strings.TrimSpace(req.Description)
 	existing.SurfaceType = strings.TrimSpace(req.SurfaceType)
 	existing.Capacity = req.Capacity
-	existing.Address = strings.TrimSpace(req.Address)
-	existing.City = strings.TrimSpace(req.City)
+	existing.Address = address
+	existing.City = city
 	existing.Latitude = req.Latitude
 	existing.Longitude = req.Longitude
 	existing.IsActive = isActive

@@ -1,19 +1,60 @@
-import { useEffect, useId } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import type { DrawerProps } from './Drawer.types'
+
+const sizeClasses = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-lg',
+  xl: 'max-w-xl',
+} as const
 
 export function Drawer({
   open,
   onClose,
   title,
+  description,
   side = 'right',
+  size = 'sm',
   closeLabel = 'Tutup panel',
   children,
   footer,
   className,
 }: DrawerProps) {
   const titleId = useId()
+  const [rendered, setRendered] = useState(open)
+  const [visible, setVisible] = useState(false)
+
+  if (open && !rendered) {
+    setRendered(true)
+  }
+
+  useEffect(() => {
+    if (open) {
+      let frame2 = 0
+      const frame1 = requestAnimationFrame(() => {
+        frame2 = requestAnimationFrame(() => {
+          setVisible(true)
+        })
+      })
+      return () => {
+        cancelAnimationFrame(frame1)
+        if (frame2) cancelAnimationFrame(frame2)
+      }
+    }
+
+    const hideFrame = requestAnimationFrame(() => {
+      setVisible(false)
+    })
+    const timer = setTimeout(() => {
+      setRendered(false)
+    }, 300)
+    return () => {
+      cancelAnimationFrame(hideFrame)
+      clearTimeout(timer)
+    }
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -29,7 +70,7 @@ export function Drawer({
     }
   }, [open, onClose])
 
-  if (!open) return null
+  if (!rendered) return null
 
   return (
     <div
@@ -42,28 +83,40 @@ export function Drawer({
       <div
         aria-hidden="true"
         onClick={onClose}
-        className="fixed inset-0 bg-ink/50"
+        className={cn(
+          'fixed inset-0 bg-ink/50 transition-opacity duration-300 ease-out',
+          visible ? 'opacity-100' : 'opacity-0',
+        )}
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
         className={cn(
-          'pb-safe relative z-10 flex h-full w-full max-w-sm flex-col bg-surface shadow-lg',
+          'pb-safe relative z-10 flex h-full w-full flex-col bg-surface shadow-xl transition-transform duration-300 ease-out will-change-transform',
+          visible
+            ? 'translate-x-0'
+            : side === 'right'
+              ? 'translate-x-full'
+              : '-translate-x-full',
+          sizeClasses[size],
           className,
         )}
       >
-        <div className="flex items-center justify-between border-b border-line px-5 py-4">
-          {title && (
-            <h2 id={titleId} className="font-display text-lg font-semibold text-ink">
-              {title}
-            </h2>
-          )}
+        <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-4">
+          <div className="min-w-0">
+            {title && (
+              <h2 id={titleId} className="font-display text-lg font-semibold text-ink">
+                {title}
+              </h2>
+            )}
+            {description && <p className="mt-0.5 text-xs text-fg-muted">{description}</p>}
+          </div>
           <button
             type="button"
             onClick={onClose}
             aria-label={closeLabel}
-            className="ml-auto flex h-9 w-9 items-center justify-center rounded-md text-fg-muted hover:bg-surface-alt hover:text-fg"
+            className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-fg-muted hover:bg-surface-alt hover:text-fg"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>

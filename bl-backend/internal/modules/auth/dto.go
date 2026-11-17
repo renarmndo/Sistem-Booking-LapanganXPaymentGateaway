@@ -1,5 +1,7 @@
 package auth
 
+import "time"
+
 type RegisterRequest struct {
 	Name     string `json:"name" validate:"required,min=2,max=100"`
 	Email    string `json:"email" validate:"required,email,max=254"`
@@ -36,12 +38,14 @@ type ChangePasswordRequest struct {
 }
 
 type UserResponse struct {
-	ID                 uint   `json:"id"`
-	Name               string `json:"name"`
-	Email              string `json:"email"`
-	Phone              string `json:"phone"`
-	Role               string `json:"role"`
-	VerificationStatus string `json:"verification_status"`
+	ID                 uint      `json:"id"`
+	Name               string    `json:"name"`
+	Email              string    `json:"email"`
+	Phone              string    `json:"phone"`
+	Role               string    `json:"role"`
+	IsActive           bool      `json:"is_active"`
+	VerificationStatus string    `json:"verification_status"`
+	CreatedAt          time.Time `json:"created_at"`
 }
 
 type AuthResponse struct {

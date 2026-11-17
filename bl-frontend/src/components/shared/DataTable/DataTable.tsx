@@ -14,7 +14,11 @@ export function DataTable<T>({
   onSort,
   page,
   totalPages,
+  totalItems,
   onPageChange,
+  limit,
+  limitOptions = [10, 20, 50],
+  onLimitChange,
   loading = false,
   emptyTitle = 'Belum ada data',
   emptyDescription = 'Data akan muncul di sini setelah tersedia.',
@@ -106,8 +110,40 @@ export function DataTable<T>({
         ))}
       </div>
 
-      {page !== undefined && totalPages !== undefined && onPageChange && (
-        <Pagination page={page} totalPages={totalPages} onPageChange={onPageChange} />
+      {(onLimitChange || (page !== undefined && totalPages !== undefined && onPageChange)) && (
+        <div className="flex flex-col items-center justify-between gap-3 border-t border-line pt-3 sm:flex-row">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-fg-muted">
+            {limit !== undefined && onLimitChange && (
+              <label className="inline-flex items-center gap-2">
+                <span>Tampilkan</span>
+                <select
+                  aria-label="Jumlah data per halaman"
+                  value={limit}
+                  onChange={(e) => onLimitChange(Number(e.target.value))}
+                  className="h-8 rounded-md border border-line bg-surface px-2 text-xs font-medium text-ink focus:border-primary-700 focus:outline-none"
+                >
+                  {limitOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+                <span>data</span>
+              </label>
+            )}
+            {totalItems !== undefined && (
+              <span>
+                Total <strong className="font-semibold text-ink">{totalItems}</strong> data
+                {page !== undefined && totalPages !== undefined && totalPages > 0
+                  ? ` · Halaman ${page} dari ${totalPages}`
+                  : ''}
+              </span>
+            )}
+          </div>
+          {page !== undefined && totalPages !== undefined && onPageChange && (
+            <Pagination page={page} totalPages={totalPages} onPageChange={onPageChange} />
+          )}
+        </div>
       )}
     </div>
   )

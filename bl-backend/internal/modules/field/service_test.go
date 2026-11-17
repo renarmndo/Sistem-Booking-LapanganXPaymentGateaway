@@ -431,6 +431,10 @@ func (m mockOwnerChecker) IsOwnerUser(_ context.Context, userID uint) (bool, err
 	return userID == m.validOwnerID, nil
 }
 
+func (m mockOwnerChecker) DefaultOwnerID(_ context.Context) (uint, error) {
+	return m.validOwnerID, nil
+}
+
 func assertFieldErrCode(t *testing.T, err error, code string) {
 	t.Helper()
 	if err == nil {

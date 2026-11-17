@@ -15,5 +15,7 @@ export function useAvailability(fieldId: number | string, date: string) {
       return data.data
     },
     enabled: Boolean(fieldId && date),
+    refetchInterval: 12_000,
+    refetchIntervalInBackground: false,
   })
 }

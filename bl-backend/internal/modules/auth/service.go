@@ -52,6 +52,12 @@ type Service interface {
 	UpdateProfile(ctx context.Context, userID uint, req UpdateProfileRequest) (*UserResponse, error)
 	ChangePassword(ctx context.Context, userID uint, req ChangePasswordRequest) error
 	IsOwnerUser(ctx context.Context, userID uint) (bool, error)
+	DefaultOwnerID(ctx context.Context) (uint, error)
+	ListAdminUsers(ctx context.Context, filter AdminUserFilter) (*PaginatedAdminUsersResponse, error)
+	GetAdminUserDetail(ctx context.Context, userID uint) (*AdminUserSummaryResponse, error)
+	CreateAdminUser(ctx context.Context, req AdminCreateUserRequest) (*UserResponse, error)
+	UpdateAdminUser(ctx context.Context, actorAdminID, targetUserID uint, req AdminUpdateUserRequest) (*UserResponse, error)
+	ResetAdminUserPassword(ctx context.Context, targetUserID uint, newPassword string) error
 }
 
 type RateLimiter interface {
@@ -462,6 +468,10 @@ func (s *service) IsOwnerUser(ctx context.Context, userID uint) (bool, error) {
 	return user.Role == constant.RoleOwner, nil
 }
 
+func (s *service) DefaultOwnerID(ctx context.Context) (uint, error) {
+	return s.repo.FindFirstActiveOwnerID(ctx)
+}
+
 func (s *service) issueTokens(ctx context.Context, user *User, familyID string, meta ClientMeta, revokeID *uint) (*AuthResult, error) {
 	accessToken, err := token.Generate(user.ID, string(user.Role), s.cfg.JWT.Secret, s.cfg.JWT.AccessTTL)
 	if err != nil {
@@ -512,7 +522,11 @@ func (s *service) isLimitExceeded(ctx context.Context, key string, limit int) (b
 	if s.limiter == nil || limit <= 0 {
 		return false, nil
 	}
-	return s.limiter.IsExceeded(ctx, key, limit)
+	exceeded, err := s.limiter.IsExceeded(ctx, key, limit)
+	if err != nil && s.cfg.App.Env != "production" {
+		return false, nil
+	}
+	return exceeded, err
 }
 
 func (s *service) incrementLimit(ctx context.Context, key string, window time.Duration) error {
