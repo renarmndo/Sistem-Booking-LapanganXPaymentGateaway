@@ -5,7 +5,7 @@ import { PATHS } from '@/app/router/paths'
 import { PublicLayout } from '@/components/layout'
 import { PageLoader } from '@/components/shared'
 
-const PlaceholderPage = lazy(() => import('@/app/pages/PlaceholderPage'))
+const HelpPage = lazy(() => import('@/app/pages/HelpPage'))
 const HomePage = lazy(() => import('@/app/pages/HomePage'))
 const FieldListPage = lazy(() => import('@/features/fields/pages/FieldListPage'))
 const FieldDetailPage = lazy(() => import('@/app/pages/FieldDetailPage'))
@@ -50,7 +50,7 @@ export const publicRoutes: RouteObject[] = [
       },
       {
         path: PATHS.HELP,
-        element: withSuspense(<PlaceholderPage title="Bantuan & FAQ" />),
+        element: withSuspense(<HelpPage />),
       },
     ],
   },
