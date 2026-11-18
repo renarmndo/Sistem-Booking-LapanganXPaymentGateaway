@@ -3,10 +3,7 @@ import { LoginForm } from '../components/LoginForm'
 
 export function LoginPage() {
   return (
-    <AuthLayout
-      title="Masuk ke Akun"
-      subtitle="Kelola pemesanan lapangan dan jadwal bermain Anda."
-    >
+    <AuthLayout title="Masuk ke Akun" subtitle="Kelola pemesanan lapangan dan jadwal bermain Anda.">
       <LoginForm />
     </AuthLayout>
   )
