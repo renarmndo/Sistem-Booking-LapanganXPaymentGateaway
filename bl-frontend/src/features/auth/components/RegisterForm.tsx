@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AlertCircle } from 'lucide-react'
-import { useForm, useWatch } from 'react-hook-form'
+import { AlertCircle, MailCheck } from 'lucide-react'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { PATHS } from '@/app/router/paths'
-import { Button, FormField, Input, PasswordInput } from '@/components/ui'
+import { Button, FormField, Input, OtpInput, PasswordInput } from '@/components/ui'
 import { getErrorMessage, getFieldErrors } from '@/utils/error'
 import { useRegister, useResendOtp, useVerifyOtp } from '../hooks/useRegister'
 import {
@@ -17,9 +17,18 @@ import { PasswordStrengthIndicator } from './PasswordStrengthIndicator'
 
 export function RegisterForm() {
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null)
+  const [resendCooldown, setResendCooldown] = useState(0)
   const registerMutation = useRegister()
   const verifyOtpMutation = useVerifyOtp()
   const resendOtpMutation = useResendOtp()
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const timer = window.setInterval(() => {
+      setResendCooldown((prev) => (prev <= 1 ? 0 : prev - 1))
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [resendCooldown])
 
   const {
     register,
@@ -67,6 +76,18 @@ export function RegisterForm() {
     verifyOtpMutation.mutate({ email: registeredEmail, otp: values.otp })
   }
 
+  const handleResendOtp = () => {
+    if (!registeredEmail || resendCooldown > 0) return
+    resendOtpMutation.mutate(
+      { email: registeredEmail },
+      {
+        onSuccess: () => {
+          setResendCooldown(60)
+        },
+      },
+    )
+  }
+
   if (registeredEmail) {
     const otpServerError = verifyOtpMutation.isError
       ? getErrorMessage(verifyOtpMutation.error, 'Kode OTP tidak valid.')
@@ -75,9 +96,16 @@ export function RegisterForm() {
         : null
 
     return (
-      <form onSubmit={otpForm.handleSubmit(onSubmitOtp)} noValidate className="space-y-4">
-        <div className="rounded-md border border-primary-200 bg-primary-50 p-3 text-sm text-primary-900">
-          Kode OTP 6 digit telah dikirim ke <strong className="font-semibold">{registeredEmail}</strong>.
+      <form onSubmit={otpForm.handleSubmit(onSubmitOtp)} noValidate className="space-y-6">
+        <div className="flex flex-col items-center rounded-xl border border-primary-200/80 bg-primary-50/60 px-4 py-5 text-center">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-surface text-primary-700 shadow-xs ring-1 ring-primary-200">
+            <MailCheck className="h-6 w-6" aria-hidden="true" />
+          </div>
+          <p className="text-sm font-semibold text-ink">Cek Kotak Masuk Email Anda</p>
+          <p className="mt-1 text-sm text-fg-muted">
+            Masukkan 6 digit kode verifikasi yang dikirim ke{' '}
+            <strong className="font-semibold text-primary-900">{registeredEmail}</strong>
+          </p>
         </div>
 
         {otpServerError && (
@@ -93,34 +121,48 @@ export function RegisterForm() {
         <FormField
           label="Kode OTP"
           htmlFor="register-otp"
-          hint="Berlaku 15 menit"
+          hint="Berlaku 15 menit. Anda dapat mengetik satu per satu atau langsung menempel (paste) 6 digit kode."
           error={otpForm.formState.errors.otp?.message}
           required
         >
-          <Input
-            id="register-otp"
-            inputMode="numeric"
-            maxLength={6}
-            placeholder="123456"
-            className="font-mono tracking-widest"
-            error={Boolean(otpForm.formState.errors.otp)}
-            {...otpForm.register('otp')}
+          <Controller
+            control={otpForm.control}
+            name="otp"
+            render={({ field }) => (
+              <OtpInput
+                id="register-otp"
+                name={field.name}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                error={Boolean(otpForm.formState.errors.otp)}
+                disabled={verifyOtpMutation.isPending}
+                autoFocus
+              />
+            )}
           />
         </FormField>
 
-        <Button type="submit" fullWidth loading={verifyOtpMutation.isPending}>
-          Verifikasi Akun
-        </Button>
+        <div className="space-y-2.5">
+          <Button type="submit" fullWidth loading={verifyOtpMutation.isPending}>
+            Verifikasi Akun
+          </Button>
 
-        <Button
-          type="button"
-          variant="ghost"
-          fullWidth
-          loading={resendOtpMutation.isPending}
-          onClick={() => resendOtpMutation.mutate({ email: registeredEmail })}
-        >
-          Kirim Ulang OTP
-        </Button>
+          <div className="flex items-center justify-center gap-1.5 pt-1 text-sm text-fg-muted">
+            <span>Belum menerima kode?</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              loading={resendOtpMutation.isPending}
+              disabled={resendCooldown > 0}
+              onClick={handleResendOtp}
+              className="h-auto px-1.5 py-0.5 font-semibold text-primary-700 hover:bg-primary-50"
+            >
+              {resendCooldown > 0 ? `Kirim ulang (${resendCooldown} dtk)` : 'Kirim Ulang OTP'}
+            </Button>
+          </div>
+        </div>
       </form>
     )
   }

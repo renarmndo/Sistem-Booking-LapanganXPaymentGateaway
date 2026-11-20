@@ -10,3 +10,5 @@ type Storage interface {
 	Save(ctx context.Context, subdir, filename string, r io.Reader) (string, error)
 	Delete(ctx context.Context, publicURL string) error
 }
+
+
