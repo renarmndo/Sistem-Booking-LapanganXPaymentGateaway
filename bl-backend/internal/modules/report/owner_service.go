@@ -84,7 +84,7 @@ func (s *service) ListOwnerFields(ctx context.Context, ownerID uint) ([]OwnerFie
 
 	now := s.now().In(timeutil.WIB)
 	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, timeutil.WIB)
-	monthEnd := timeutil.StartOfDay(now)
+	monthEnd := monthStart.AddDate(0, 1, -1)
 
 	utilReport, _ := s.GetUtilizationReport(ctx, &ownerID, nil, monthStart.Format(timeutil.DateLayout), monthEnd.Format(timeutil.DateLayout))
 	utilByField := make(map[uint]float64)

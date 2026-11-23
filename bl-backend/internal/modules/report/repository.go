@@ -46,13 +46,16 @@ func (r *gormRepository) GetAdminDashboardSummary(ctx context.Context, from, to 
 	summary.OnlineBookings = counts.Online
 	summary.OfflineBookings = counts.Offline
 
+	const processedRefundsSubquery = "LEFT JOIN (SELECT booking_id, SUM(amount) AS refunded_amount FROM refund_requests WHERE status = 'processed' GROUP BY booking_id) rr ON rr.booking_id = b.id"
+
 	var rev struct {
 		PaidRevenue int64
 	}
 	if err := r.db.WithContext(ctx).
 		Table("payments p").
 		Joins("JOIN bookings b ON b.id = p.booking_id").
-		Select("COALESCE(SUM(CASE WHEN p.status = 'paid' THEN p.amount ELSE 0 END), 0) AS paid_revenue").
+		Joins(processedRefundsSubquery).
+		Select("COALESCE(SUM(CASE WHEN p.status = 'paid' THEN GREATEST(p.amount - COALESCE(rr.refunded_amount, 0), 0) ELSE 0 END), 0) AS paid_revenue").
 		Where("b.booking_date >= ? AND b.booking_date <= ?", from, to).
 		Scan(&rev).Error; err != nil {
 		return nil, err
@@ -93,7 +96,8 @@ func (r *gormRepository) GetAdminDashboardSummary(ctx context.Context, from, to 
 	if err := r.db.WithContext(ctx).
 		Table("bookings b").
 		Joins("LEFT JOIN payments p ON p.booking_id = b.id AND p.status = 'paid'").
-		Select("DATE_FORMAT(b.booking_date, '%Y-%m-%d') AS date, COUNT(DISTINCT b.id) AS bookings, COALESCE(SUM(p.amount), 0) AS revenue").
+		Joins(processedRefundsSubquery).
+		Select("DATE_FORMAT(b.booking_date, '%Y-%m-%d') AS date, COUNT(DISTINCT b.id) AS bookings, COALESCE(SUM(CASE WHEN p.id IS NOT NULL THEN GREATEST(p.amount - COALESCE(rr.refunded_amount, 0), 0) ELSE 0 END), 0) AS revenue").
 		Where("b.booking_date >= ? AND b.booking_date <= ?", from, to).
 		Group("b.booking_date").
 		Order("b.booking_date ASC").
@@ -105,7 +109,8 @@ func (r *gormRepository) GetAdminDashboardSummary(ctx context.Context, from, to 
 		Table("bookings b").
 		Joins("JOIN fields f ON f.id = b.field_id").
 		Joins("LEFT JOIN payments p ON p.booking_id = b.id AND p.status = 'paid'").
-		Select("b.field_id, f.name AS field_name, COUNT(DISTINCT b.id) AS bookings, COALESCE(SUM(p.amount), 0) AS revenue").
+		Joins(processedRefundsSubquery).
+		Select("b.field_id, f.name AS field_name, COUNT(DISTINCT b.id) AS bookings, COALESCE(SUM(CASE WHEN p.id IS NOT NULL THEN GREATEST(p.amount - COALESCE(rr.refunded_amount, 0), 0) ELSE 0 END), 0) AS revenue").
 		Where("b.booking_date >= ? AND b.booking_date <= ? AND b.status IN ('CONFIRMED','COMPLETED')", from, to).
 		Group("b.field_id, f.name").
 		Order("bookings DESC, revenue DESC").

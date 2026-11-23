@@ -218,6 +218,8 @@ export function useProcessAdminRefund() {
     onSuccess: () => {
       toast.success('Status refund diperbarui.')
       void qc.invalidateQueries({ queryKey: ['admin', 'refunds'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'summary'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'bookings'] })
     },
     onError: (err) => toast.error(getErrorMessage(err, 'Gagal memproses refund.')),
   })

@@ -10,13 +10,22 @@ import { useAdminBookings, useAdminDashboardSummary } from '../../hooks/useAdmin
 import { RevenueChart } from '../components/RevenueChart'
 import { SummaryCards } from '../components/SummaryCards'
 
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 function defaultDateRange() {
-  const to = new Date()
-  const from = new Date()
-  from.setDate(to.getDate() - 29)
+  const today = new Date()
+  const from = new Date(today)
+  from.setDate(today.getDate() - 29)
+  const to = new Date(today)
+  to.setDate(today.getDate() + 30)
   return {
-    from: from.toISOString().slice(0, 10),
-    to: to.toISOString().slice(0, 10),
+    from: formatLocalDate(from),
+    to: formatLocalDate(to),
   }
 }
 
@@ -58,30 +67,73 @@ export function AdminDashboardPage() {
         }
       />
 
-      <div className="flex flex-wrap items-end gap-3 rounded-lg border border-line bg-surface p-3 sm:p-4">
-        <div>
-          <label htmlFor="dash-from" className="block text-xs font-medium text-fg-muted">
-            Dari Tanggal
-          </label>
-          <Input
-            id="dash-from"
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            className="mt-1 w-40"
-          />
+      <div className="flex flex-wrap items-end justify-between gap-3 rounded-lg border border-line bg-surface p-3 sm:p-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <label htmlFor="dash-from" className="block text-xs font-medium text-fg-muted">
+              Dari Tanggal
+            </label>
+            <Input
+              id="dash-from"
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              className="mt-1 w-40"
+            />
+          </div>
+          <div>
+            <label htmlFor="dash-to" className="block text-xs font-medium text-fg-muted">
+              Sampai Tanggal
+            </label>
+            <Input
+              id="dash-to"
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              className="mt-1 w-40"
+            />
+          </div>
         </div>
-        <div>
-          <label htmlFor="dash-to" className="block text-xs font-medium text-fg-muted">
-            Sampai Tanggal
-          </label>
-          <Input
-            id="dash-to"
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            className="mt-1 w-40"
-          />
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              const today = formatLocalDate(new Date())
+              setFrom(today)
+              setTo(today)
+            }}
+          >
+            Hari Ini
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              const now = new Date()
+              const start = new Date(now.getFullYear(), now.getMonth(), 1)
+              const end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+              setFrom(formatLocalDate(start))
+              setTo(formatLocalDate(end))
+            }}
+          >
+            Bulan Ini
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              const range = defaultDateRange()
+              setFrom(range.from)
+              setTo(range.to)
+            }}
+          >
+            ±30 Hari
+          </Button>
         </div>
       </div>
 

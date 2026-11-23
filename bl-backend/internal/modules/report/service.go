@@ -35,8 +35,9 @@ func NewService(repo Repository, c cache.Cache) Service {
 
 func (s *service) GetAdminDashboardSummary(ctx context.Context, fromStr, toStr string) (*AdminDashboardSummary, error) {
 	now := s.now().In(timeutil.WIB)
-	toDate := timeutil.StartOfDay(now)
-	fromDate := toDate.AddDate(0, 0, -29)
+	today := timeutil.StartOfDay(now)
+	fromDate := today.AddDate(0, 0, -29)
+	toDate := today.AddDate(0, 0, 30)
 
 	if strings.TrimSpace(fromStr) != "" {
 		parsed, err := timeutil.ParseDate(strings.TrimSpace(fromStr))

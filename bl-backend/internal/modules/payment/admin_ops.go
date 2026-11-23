@@ -501,6 +501,9 @@ func (s *service) ProcessAdminRefund(ctx context.Context, adminID, refundID uint
 	existing.ProcessedBy = &adminID
 	existing.ProcessedAt = &now
 	existing.Note = note
+	if s.cache != nil {
+		_ = s.cache.DeleteByPrefix(ctx, "cache:report:")
+	}
 	return existing, nil
 }
 

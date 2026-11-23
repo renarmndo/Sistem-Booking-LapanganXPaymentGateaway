@@ -202,10 +202,12 @@ func (r *gormRepository) ListOwnerTransactions(ctx context.Context, ownerID uint
 }
 
 func (r *gormRepository) GetPaidRevenueSummary(ctx context.Context, ownerID *uint, fieldID *uint, from, to string) (int64, int64, int64, int64, error) {
+	const processedRefundsSubquery = "LEFT JOIN (SELECT booking_id, SUM(amount) AS refunded_amount FROM refund_requests WHERE status = 'processed' GROUP BY booking_id) rr ON rr.booking_id = b.id"
 	q := r.db.WithContext(ctx).
 		Table("payments p").
 		Joins("JOIN bookings b ON b.id = p.booking_id").
 		Joins("JOIN fields f ON f.id = b.field_id").
+		Joins(processedRefundsSubquery).
 		Where("f.deleted_at IS NULL AND p.status = 'paid' AND b.booking_date >= ? AND b.booking_date <= ?", from, to)
 	q = whereOwner(q, ownerID)
 	if fieldID != nil {
@@ -218,12 +220,13 @@ func (r *gormRepository) GetPaidRevenueSummary(ctx context.Context, ownerID *uin
 		Offline int64
 		Count   int64
 	}
-	err := q.Select("COALESCE(SUM(p.amount), 0) AS total, COALESCE(SUM(CASE WHEN b.source = 'online' THEN p.amount ELSE 0 END), 0) AS online, COALESCE(SUM(CASE WHEN b.source = 'offline' THEN p.amount ELSE 0 END), 0) AS offline, COUNT(DISTINCT b.id) AS count").
+	err := q.Select("COALESCE(SUM(GREATEST(p.amount - COALESCE(rr.refunded_amount, 0), 0)), 0) AS total, COALESCE(SUM(CASE WHEN b.source = 'online' THEN GREATEST(p.amount - COALESCE(rr.refunded_amount, 0), 0) ELSE 0 END), 0) AS online, COALESCE(SUM(CASE WHEN b.source = 'offline' THEN GREATEST(p.amount - COALESCE(rr.refunded_amount, 0), 0) ELSE 0 END), 0) AS offline, COUNT(DISTINCT b.id) AS count").
 		Scan(&row).Error
 	return row.Total, row.Online, row.Offline, row.Count, err
 }
 
 func (r *gormRepository) GetRevenueSeries(ctx context.Context, ownerID *uint, fieldID *uint, from, to, group string) ([]RevenuePoint, error) {
+	const processedRefundsSubquery = "LEFT JOIN (SELECT booking_id, SUM(amount) AS refunded_amount FROM refund_requests WHERE status = 'processed' GROUP BY booking_id) rr ON rr.booking_id = b.id"
 	periodExpr := "DATE_FORMAT(b.booking_date, '%Y-%m-%d')"
 	if group == "month" {
 		periodExpr = "DATE_FORMAT(b.booking_date, '%Y-%m')"
@@ -232,6 +235,7 @@ func (r *gormRepository) GetRevenueSeries(ctx context.Context, ownerID *uint, fi
 		Table("payments p").
 		Joins("JOIN bookings b ON b.id = p.booking_id").
 		Joins("JOIN fields f ON f.id = b.field_id").
+		Joins(processedRefundsSubquery).
 		Where("f.deleted_at IS NULL AND p.status = 'paid' AND b.booking_date >= ? AND b.booking_date <= ?", from, to)
 	q = whereOwner(q, ownerID)
 	if fieldID != nil {
@@ -239,7 +243,7 @@ func (r *gormRepository) GetRevenueSeries(ctx context.Context, ownerID *uint, fi
 	}
 
 	var rows []RevenuePoint
-	err := q.Select(periodExpr + " AS period, COALESCE(SUM(CASE WHEN b.source = 'online' THEN p.amount ELSE 0 END), 0) AS online_revenue, COALESCE(SUM(CASE WHEN b.source = 'offline' THEN p.amount ELSE 0 END), 0) AS offline_revenue, COALESCE(SUM(p.amount), 0) AS total_revenue, COUNT(DISTINCT b.id) AS bookings").
+	err := q.Select(periodExpr + " AS period, COALESCE(SUM(CASE WHEN b.source = 'online' THEN GREATEST(p.amount - COALESCE(rr.refunded_amount, 0), 0) ELSE 0 END), 0) AS online_revenue, COALESCE(SUM(CASE WHEN b.source = 'offline' THEN GREATEST(p.amount - COALESCE(rr.refunded_amount, 0), 0) ELSE 0 END), 0) AS offline_revenue, COALESCE(SUM(GREATEST(p.amount - COALESCE(rr.refunded_amount, 0), 0)), 0) AS total_revenue, COUNT(DISTINCT b.id) AS bookings").
 		Group("period").
 		Order("period ASC").
 		Scan(&rows).Error
