@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha512"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -273,4 +274,48 @@ func TestWorkerSyncBeforeExpireConfirmsPaidBooking(t *testing.T) {
 		t.Fatalf("expected worker sync to confirm booking, confirmed=%v status=%s err=%v", confirmed, coord.bookingStatus, err)
 	}
 	_ = errors.New("")
+}
+
+func TestAdminRefundItem_JSONSerializationSnakeCase(t *testing.T) {
+	now := time.Date(2026, 11, 23, 15, 0, 0, 0, time.UTC)
+	item := AdminRefundItem{
+		RefundRequest: RefundRequest{
+			ID:        7,
+			BookingID: 42,
+			PaymentID: 11,
+			Amount:    150000,
+			Status:    "pending",
+			Reason:    "Berhalangan hadir",
+			Note:      "",
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
+		BookingCode: "NF-20261123-001",
+	}
+
+	raw, err := json.Marshal(item)
+	if err != nil {
+		t.Fatalf("marshal AdminRefundItem: %v", err)
+	}
+
+	var decoded map[string]any
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("unmarshal AdminRefundItem: %v", err)
+	}
+
+	if decoded["id"] != float64(7) {
+		t.Fatalf("expected json id=7, got %v (raw=%s)", decoded["id"], string(raw))
+	}
+	if decoded["booking_code"] != "NF-20261123-001" {
+		t.Fatalf("expected json booking_code, got %v", decoded["booking_code"])
+	}
+	if decoded["amount"] != float64(150000) {
+		t.Fatalf("expected json amount=150000, got %v", decoded["amount"])
+	}
+	if decoded["status"] != "pending" {
+		t.Fatalf("expected json status=pending, got %v", decoded["status"])
+	}
+	if decoded["reason"] != "Berhalangan hadir" {
+		t.Fatalf("expected json reason, got %v", decoded["reason"])
+	}
 }

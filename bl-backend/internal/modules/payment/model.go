@@ -27,27 +27,27 @@ type Payment struct {
 func (Payment) TableName() string { return "payments" }
 
 type PaymentLog struct {
-	ID         uint      `gorm:"primaryKey"`
-	PaymentID  uint      `gorm:"not null;index"`
-	Event      string    `gorm:"size:64;not null"`
-	RawPayload string    `gorm:"type:json;not null"`
-	CreatedAt  time.Time
+	ID         uint      `gorm:"primaryKey" json:"id"`
+	PaymentID  uint      `gorm:"not null;index" json:"payment_id"`
+	Event      string    `gorm:"size:64;not null" json:"event"`
+	RawPayload string    `gorm:"type:json;not null" json:"raw_payload"`
+	CreatedAt  time.Time `json:"created_at"`
 }
 
 func (PaymentLog) TableName() string { return "payment_logs" }
 
 type RefundRequest struct {
-	ID          uint       `gorm:"primaryKey"`
-	BookingID   uint       `gorm:"not null;index"`
-	PaymentID   uint       `gorm:"not null;index"`
-	Amount      int64      `gorm:"not null"`
-	Status      string     `gorm:"type:enum('pending','processed','rejected');not null;default:'pending'"`
-	Reason      string     `gorm:"size:255"`
-	ProcessedBy *uint
-	ProcessedAt *time.Time
-	Note        string     `gorm:"size:255"`
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID          uint       `gorm:"primaryKey" json:"id"`
+	BookingID   uint       `gorm:"not null;index" json:"booking_id"`
+	PaymentID   uint       `gorm:"not null;index" json:"payment_id"`
+	Amount      int64      `gorm:"not null" json:"amount"`
+	Status      string     `gorm:"type:enum('pending','processed','rejected');not null;default:'pending'" json:"status"`
+	Reason      string     `gorm:"size:255" json:"reason"`
+	ProcessedBy *uint      `json:"processed_by,omitempty"`
+	ProcessedAt *time.Time `json:"processed_at,omitempty"`
+	Note        string     `gorm:"size:255" json:"note"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
 func (RefundRequest) TableName() string { return "refund_requests" }
