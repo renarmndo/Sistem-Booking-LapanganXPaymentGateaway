@@ -1,6 +1,6 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { LayoutDashboard, LogOut, Menu, X } from 'lucide-react'
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { PATHS } from '@/app/router/paths'
 import { Badge, Button } from '@/components/ui'
 import { useAuth } from '@/features/auth'
@@ -22,13 +22,30 @@ export interface DashboardLayoutProps {
 
 export function DashboardLayout({ panelTitle, navItems, children }: DashboardLayoutProps) {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const mainRef = useRef<HTMLElement>(null)
+  const { pathname } = useLocation()
   const { user, role, logout, isLoggingOut } = useAuth()
   const userInitial = (user?.name?.trim()?.[0] ?? 'N').toUpperCase()
   const roleLabel = role === 'admin' ? 'Petugas' : role === 'owner' ? 'Owner' : role?.toUpperCase()
 
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 })
+  }, [pathname])
+
+  useEffect(() => {
+    if (!drawerOpen) return
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setDrawerOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [drawerOpen])
+
   const sidebarContent = (
     <div className="flex h-full flex-col bg-primary-950 text-primary-100">
-      <div className="flex h-16 items-center justify-between border-b border-primary-900 px-5">
+      <div className="flex h-16 shrink-0 items-center justify-between border-b border-primary-900 px-5">
         <Link to={PATHS.HOME} className="font-display text-lg font-bold text-surface">
           Noel Futsal
         </Link>
@@ -42,13 +59,14 @@ export function DashboardLayout({ panelTitle, navItems, children }: DashboardLay
         </button>
       </div>
 
-      <div className="px-4 py-3">
-        <p className="text-xs font-medium text-primary-300">
-          {panelTitle}
-        </p>
+      <div className="shrink-0 px-4 py-3">
+        <p className="text-xs font-medium text-primary-300">{panelTitle}</p>
       </div>
 
-      <nav aria-label={panelTitle} className="flex-1 space-y-1 px-3 pb-6">
+      <nav
+        aria-label={panelTitle}
+        className="flex-1 space-y-1 overflow-y-auto overscroll-contain px-3 pb-6"
+      >
         {navItems.map((item) => (
           <NavLink
             key={item.to}
@@ -78,8 +96,10 @@ export function DashboardLayout({ panelTitle, navItems, children }: DashboardLay
   )
 
   return (
-    <div className="flex min-h-screen bg-bg text-fg">
-      <aside className="hidden w-64 shrink-0 lg:block">{sidebarContent}</aside>
+    <div className="flex h-dvh overflow-hidden bg-bg text-fg">
+      <aside className="hidden h-full w-64 shrink-0 border-r border-primary-900 lg:block">
+        {sidebarContent}
+      </aside>
 
       {drawerOpen && (
         <div className="fixed inset-0 z-50 flex lg:hidden" role="dialog" aria-modal="true">
@@ -88,12 +108,14 @@ export function DashboardLayout({ panelTitle, navItems, children }: DashboardLay
             onClick={() => setDrawerOpen(false)}
             className="fixed inset-0 bg-ink/50"
           />
-          <aside className="relative z-10 w-64 max-w-[80vw] shadow-lg">{sidebarContent}</aside>
+          <aside className="relative z-10 h-full w-64 max-w-[80vw] shadow-lg">
+            {sidebarContent}
+          </aside>
         </div>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 items-center justify-between border-b border-line bg-surface px-4 sm:px-6">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-line bg-surface px-4 sm:px-6">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -140,7 +162,9 @@ export function DashboardLayout({ panelTitle, navItems, children }: DashboardLay
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6">{children ?? <Outlet />}</main>
+        <main ref={mainRef} className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
+          {children ?? <Outlet />}
+        </main>
       </div>
     </div>
   )
