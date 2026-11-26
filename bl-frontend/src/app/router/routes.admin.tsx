@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   MapPin,
   Receipt,
-  RotateCcw,
   Settings,
   Sparkles,
   Users,
@@ -30,7 +29,6 @@ const AdminUsersPage = lazy(() => import('@/features/admin/users/pages/AdminUser
 const AdminTransactionsPage = lazy(
   () => import('@/features/admin/transactions/pages/AdminTransactionsPage'),
 )
-const AdminRefundsPage = lazy(() => import('@/features/admin/refunds/pages/AdminRefundsPage'))
 const AdminSettingsPage = lazy(() => import('@/features/admin/settings/pages/AdminSettingsPage'))
 
 function withSuspense(node: ReactNode) {
@@ -84,11 +82,6 @@ export function AdminDashboardShell() {
       label: 'Transaksi',
       icon: <Receipt className="h-4 w-4 shrink-0" aria-hidden="true" />,
       badge: needsReviewCount,
-    },
-    {
-      to: PATHS.ADMIN_REFUNDS,
-      label: 'Refund',
-      icon: <RotateCcw className="h-4 w-4 shrink-0" aria-hidden="true" />,
     },
     {
       to: PATHS.ADMIN_SETTINGS,
@@ -146,10 +139,6 @@ export const adminRoutes: RouteObject[] = [
           {
             path: PATHS.ADMIN_TRANSACTIONS,
             element: withSuspense(<AdminTransactionsPage />),
-          },
-          {
-            path: PATHS.ADMIN_REFUNDS,
-            element: withSuspense(<AdminRefundsPage />),
           },
           {
             path: PATHS.ADMIN_SETTINGS,

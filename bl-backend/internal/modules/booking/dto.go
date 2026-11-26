@@ -8,9 +8,10 @@ import (
 )
 
 type CreateBookingRequest struct {
-	FieldID uint        `json:"field_id" validate:"required,gt=0"`
-	Date    string      `json:"date" validate:"required"`
-	Slots   []SlotInput `json:"slots" validate:"required,min=1,dive"`
+	FieldID     uint        `json:"field_id" validate:"required,gt=0"`
+	Date        string      `json:"date" validate:"required"`
+	Slots       []SlotInput `json:"slots" validate:"required,min=1,dive"`
+	PaymentType string      `json:"payment_type" validate:"omitempty,oneof=full dp"`
 }
 
 type PaymentStubResult struct {
@@ -20,11 +21,13 @@ type PaymentStubResult struct {
 }
 
 type CreateBookingResponse struct {
-	BookingID uint              `json:"booking_id"`
-	Code      string            `json:"code"`
-	Total     int64             `json:"total"`
-	ExpiresAt time.Time         `json:"expires_at"`
-	Payment   PaymentStubResult `json:"payment"`
+	BookingID   uint              `json:"booking_id"`
+	Code        string            `json:"code"`
+	Total       int64             `json:"total"`
+	PayAmount   int64             `json:"pay_amount"`
+	PaymentType string            `json:"payment_type"`
+	ExpiresAt   time.Time         `json:"expires_at"`
+	Payment     PaymentStubResult `json:"payment"`
 }
 
 type FieldSummaryDTO struct {
@@ -44,6 +47,8 @@ type BookingSlotDTO struct {
 type BookingPaymentDTO struct {
 	Provider string `json:"provider"`
 	Status   string `json:"status"`
+	Channel  string `json:"channel,omitempty"`
+	Amount   int64  `json:"amount,omitempty"`
 }
 
 type RefundSummaryDTO struct {
@@ -60,6 +65,7 @@ type BookingDetailResponse struct {
 	StartTime    string                 `json:"start_time"`
 	EndTime      string                 `json:"end_time"`
 	TotalAmount  int64                  `json:"total_amount"`
+	PaidAmount   int64                  `json:"paid_amount"`
 	Status       constant.BookingStatus `json:"status"`
 	Source       constant.BookingSource `json:"source"`
 	ExpiresAt    *time.Time             `json:"expires_at"`
@@ -173,6 +179,8 @@ type UserBasicInfo struct {
 
 type BookingPaymentSummary struct {
 	Provider   string
+	Channel    string
 	Status     string
+	Amount     int64
 	PaidAmount int64
 }

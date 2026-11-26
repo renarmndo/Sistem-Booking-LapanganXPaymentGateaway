@@ -191,11 +191,21 @@ func (s *service) CreateOnlineBooking(ctx context.Context, userID uint, req Crea
 		}
 	}()
 
+	paymentType := strings.ToLower(strings.TrimSpace(req.PaymentType))
+	if paymentType != "dp" {
+		paymentType = "full"
+	}
+	payAmount := totalAmount
+	if paymentType == "dp" {
+		payAmount = totalAmount / 2
+	}
+
 	expiresAt := now.Add(paymentTTL)
 	created, err := s.persistBookingWithCodeRetry(ctx, userID, req.FieldID, bookingDate, pricedSlots, totalAmount, expiresAt)
 	if err != nil {
 		return nil, err
 	}
+	created.InitialPayAmount = payAmount
 
 	payment, err := s.gateway.CreatePayment(ctx, created)
 	if err != nil {
@@ -207,11 +217,13 @@ func (s *service) CreateOnlineBooking(ctx context.Context, userID uint, req Crea
 	s.invalidateAvailCache(ctx, req.FieldID, dateStr)
 
 	return &CreateBookingResponse{
-		BookingID: created.ID,
-		Code:      created.Code,
-		Total:     created.TotalAmount,
-		ExpiresAt: expiresAt,
-		Payment:   *payment,
+		BookingID:   created.ID,
+		Code:        created.Code,
+		Total:       created.TotalAmount,
+		PayAmount:   payAmount,
+		PaymentType: paymentType,
+		ExpiresAt:   expiresAt,
+		Payment:     *payment,
 	}, nil
 }
 
@@ -263,9 +275,28 @@ func (s *service) ListMyBookings(ctx context.Context, userID uint, status string
 		return nil, apperror.Internal("DB_ERROR", "Gagal mengambil ringkasan lapangan", err)
 	}
 
+	var paymentsMap map[uint]BookingPaymentSummary
+	if adminRepo, ok := s.repo.(AdminRepository); ok {
+		bookingIDs := make([]uint, len(items))
+		for i, item := range items {
+			bookingIDs[i] = item.ID
+		}
+		paymentsMap, _ = adminRepo.FindPaymentSummariesByBookingIDs(ctx, bookingIDs)
+	}
+
 	res := make([]BookingDetailResponse, 0, len(items))
 	for _, item := range items {
-		res = append(res, toBookingDetailResponse(&item, fieldMap[item.FieldID]))
+		detail := toBookingDetailResponse(&item, fieldMap[item.FieldID])
+		if p, found := paymentsMap[item.ID]; found {
+			detail.Payment = BookingPaymentDTO{
+				Provider: p.Provider,
+				Status:   p.Status,
+				Channel:  p.Channel,
+				Amount:   p.Amount,
+			}
+			detail.PaidAmount = p.PaidAmount
+		}
+		res = append(res, detail)
 	}
 
 	return &PaginatedBookingsResponse{
@@ -289,9 +320,17 @@ func (s *service) GetMyBookingDetail(ctx context.Context, userID uint, bookingID
 	}
 
 	detail := toBookingDetailResponse(item, fieldMap[item.FieldID])
-	if s.paymentHooks != nil {
-		if refund, refErr := s.paymentHooks.GetRefundStatus(ctx, item.ID); refErr == nil && refund != nil {
-			detail.Refund = refund
+	if adminRepo, ok := s.repo.(AdminRepository); ok {
+		if paymentsMap, pErr := adminRepo.FindPaymentSummariesByBookingIDs(ctx, []uint{item.ID}); pErr == nil {
+			if p, found := paymentsMap[item.ID]; found {
+				detail.Payment = BookingPaymentDTO{
+					Provider: p.Provider,
+					Status:   p.Status,
+					Channel:  p.Channel,
+					Amount:   p.Amount,
+				}
+				detail.PaidAmount = p.PaidAmount
+			}
 		}
 	}
 	return &detail, nil
@@ -306,19 +345,16 @@ func (s *service) CancelMyBooking(ctx context.Context, userID uint, bookingID ui
 		return nil, ErrBookingNotFound
 	}
 
+	if item.Status != constant.BookingPendingPayment {
+		return nil, apperror.Unprocessable(
+			"CANCEL_NOT_ALLOWED",
+			"Booking yang sudah dibayar tidak dapat dibatalkan dan tidak ada pengembalian dana",
+		)
+	}
+
 	now := s.now()
-	kickoff, err := parseKickoff(item.BookingDate, item.StartTime)
-	if err != nil {
-		return nil, apperror.Internal("TIME_ERROR", "Gagal memproses jadwal booking", err)
-	}
-
-	decision, err := EvaluateCancelPolicy(now, kickoff, item.TotalAmount, item.Status, false, CancelPolicyConfig{})
-	if err != nil {
-		return nil, err
-	}
-
 	trimmedReason := strings.TrimSpace(reason)
-	logNote := fmt.Sprintf("Dibatalkan oleh user (refund %d%% = Rp%d)", decision.RefundPercent, decision.RefundAmount)
+	logNote := "Dibatalkan oleh user sebelum pembayaran"
 	if trimmedReason != "" {
 		logNote = fmt.Sprintf("%s: %s", logNote, trimmedReason)
 	}
@@ -348,11 +384,7 @@ func (s *service) CancelMyBooking(ctx context.Context, userID uint, bookingID ui
 		_ = s.locker.ForceReleaseMany(ctx, lockKeys)
 	}
 	if s.paymentHooks != nil {
-		if decision.RefundAmount > 0 {
-			_ = s.paymentHooks.CreateRefundForBooking(ctx, item.ID, decision.RefundAmount, trimmedReason)
-		} else if item.Status == constant.BookingCancelled {
-			s.paymentHooks.CancelGatewayTransaction(ctx, item.ID)
-		}
+		s.paymentHooks.CancelGatewayTransaction(ctx, item.ID)
 	}
 	s.invalidateAvailCache(ctx, item.FieldID, dateStr)
 
@@ -360,8 +392,8 @@ func (s *service) CancelMyBooking(ctx context.Context, userID uint, bookingID ui
 		ID:            item.ID,
 		Code:          item.Code,
 		Status:        constant.BookingCancelled,
-		RefundPercent: decision.RefundPercent,
-		RefundAmount:  decision.RefundAmount,
+		RefundPercent: 0,
+		RefundAmount:  0,
 	}, nil
 }
 

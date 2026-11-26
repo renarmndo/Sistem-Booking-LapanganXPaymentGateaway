@@ -15,7 +15,7 @@ export type { SlotItemProps } from './components/SlotItem'
 export { SlotLegend } from './components/SlotLegend'
 export { StickyBookingBar } from './components/StickyBookingBar'
 export type { StickyBookingBarProps } from './components/StickyBookingBar'
-export { useAvailability } from './hooks/useAvailability'
+export { useAvailability, useAvailabilitySummary } from './hooks/useAvailability'
 export { useBookingDetail, useCreateBooking } from './hooks/useCreateBooking'
 export { usePaymentPolling } from './hooks/usePaymentPolling'
 export { useSlotSelection } from './hooks/useSlotSelection'
@@ -27,7 +27,9 @@ export type {
   BookingStatus,
   CreateBookingPayload,
   CreateBookingResponse,
+  DateAvailabilitySummary,
   PaymentStubResult,
+  PaymentType,
   SlotAvailability,
   SlotStatus,
 } from './types/booking.types'

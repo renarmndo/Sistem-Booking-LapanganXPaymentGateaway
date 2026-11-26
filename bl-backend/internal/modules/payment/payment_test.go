@@ -235,7 +235,7 @@ func TestWebhook_SignatureIdempotencyAndNoDowngrade(t *testing.T) {
 	}
 }
 
-func TestWebhook_SettlementAfterExpiredSetsNeedsReviewAndRefund(t *testing.T) {
+func TestWebhook_SettlementAfterExpiredSetsNeedsReview(t *testing.T) {
 	repo := newMemPaymentRepo()
 	_ = repo.CreatePayment(context.Background(), &Payment{BookingID: 20, OrderID: "BK-200", Amount: 250000, Status: constant.PaymentPending})
 
@@ -251,8 +251,30 @@ func TestWebhook_SettlementAfterExpiredSetsNeedsReviewAndRefund(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !repo.payments[1].NeedsReview || len(repo.refunds) != 1 || repo.refunds[0].Status != "pending" {
-		t.Fatalf("expected needs_review=true and 1 pending refund, got needsReview=%v refunds=%+v", repo.payments[1].NeedsReview, repo.refunds)
+	if !repo.payments[1].NeedsReview {
+		t.Fatalf("expected needs_review=true, got needsReview=%v", repo.payments[1].NeedsReview)
+	}
+}
+
+func TestWebhook_DP50SettlementSetsPartialPaymentAndConfirmedBooking(t *testing.T) {
+	repo := newMemPaymentRepo()
+	// Booking total is 250000 (stubBookingCoord), DP 50% payment is 125000
+	_ = repo.CreatePayment(context.Background(), &Payment{BookingID: 25, OrderID: "BK-250", Amount: 125000, Status: constant.PaymentPending})
+
+	gw := &stubGateway{serverKey: "secret"}
+	coord := &stubBookingCoord{bookingStatus: constant.BookingPendingPayment}
+	svc := NewService(repo, gw, coord, nil, nil)
+
+	sig := signTest("BK-250", "200", "125000.00", "secret")
+	err := svc.HandleWebhook(context.Background(), []byte(`{}`), midtrans.NotificationPayload{
+		OrderID: "BK-250", StatusCode: "200", GrossAmount: "125000.00", SignatureKey: sig,
+		TransactionID: "tx25", TransactionStatus: "settlement", PaymentType: "qris",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if coord.bookingStatus != constant.BookingConfirmed || repo.payments[1].Status != constant.PaymentPartial {
+		t.Fatalf("expected CONFIRMED + partial, got booking=%s payment=%s", coord.bookingStatus, repo.payments[1].Status)
 	}
 }
 

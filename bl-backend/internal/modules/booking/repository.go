@@ -408,13 +408,14 @@ func (r *gormRepository) FindPaymentSummariesByBookingIDs(ctx context.Context, b
 	type row struct {
 		BookingID uint
 		Method    string
+		Channel   string
 		Status    string
 		Amount    int64
 	}
 	var rows []row
 	err := r.db.WithContext(ctx).
 		Table("payments").
-		Select("booking_id, method, status, amount").
+		Select("booking_id, method, COALESCE(channel, '') AS channel, status, amount").
 		Where("booking_id IN ?", bookingIDs).
 		Order("id DESC").
 		Find(&rows).Error
@@ -426,12 +427,14 @@ func (r *gormRepository) FindPaymentSummariesByBookingIDs(ctx context.Context, b
 			continue
 		}
 		paid := int64(0)
-		if item.Status == string(constant.PaymentPaid) {
+		if item.Status == string(constant.PaymentPaid) || (item.Status == string(constant.PaymentPartial) && item.Method == "midtrans") {
 			paid = item.Amount
 		}
 		res[item.BookingID] = BookingPaymentSummary{
 			Provider:   item.Method,
+			Channel:    item.Channel,
 			Status:     item.Status,
+			Amount:     item.Amount,
 			PaidAmount: paid,
 		}
 	}

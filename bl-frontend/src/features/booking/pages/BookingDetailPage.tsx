@@ -35,7 +35,10 @@ export function BookingDetailPage() {
   }
 
   const booking = detailQuery.data
-  const canCancel = booking.status === 'PENDING_PAYMENT' || booking.status === 'CONFIRMED'
+  const canCancel = booking.status === 'PENDING_PAYMENT'
+  const paidAmount = booking.paid_amount ?? 0
+  const isPartialDp = booking.payment?.status === 'partial' && paidAmount < booking.total_amount
+  const remainingAmount = Math.max(0, booking.total_amount - paidAmount)
 
   const handleCopyCode = async () => {
     try {
@@ -114,21 +117,31 @@ export function BookingDetailPage() {
             </div>
           )}
 
-          {booking.refund && (
-            <div className="rounded-md border border-line bg-surface-alt p-3 text-xs text-fg-muted">
+          {isPartialDp && (
+            <div className="space-y-1.5 rounded-lg border border-gold-300 bg-gold-50/80 p-3.5 text-xs text-gold-900">
               <div className="flex items-center justify-between">
-                <strong className="text-ink">Informasi Refund</strong>
-                <span className="font-semibold uppercase text-primary-800">
-                  {booking.refund.status}
-                </span>
+                <strong className="text-ink">Pembayaran DP 50% (Belum Lunas)</strong>
+                <span className="font-semibold uppercase text-gold-800">DP 50%</span>
               </div>
-              <div className="mt-1 flex items-center justify-between">
-                <span>Nominal Refund</span>
-                <CurrencyText value={booking.refund.amount} className="font-semibold text-ink" />
+              <div className="flex items-center justify-between">
+                <span>Sudah Dibayar</span>
+                <CurrencyText value={paidAmount} className="font-semibold text-ink" />
               </div>
-              {booking.refund.reason && (
-                <p className="mt-1 text-fg-muted">Catatan: {booking.refund.reason}</p>
-              )}
+              <div className="flex items-center justify-between">
+                <span>Sisa Pelunasan</span>
+                <CurrencyText value={remainingAmount} className="font-bold text-ink" />
+              </div>
+              <p className="pt-1 text-gold-900">
+                Harap lakukan pelunasan sisa pembayaran paling lambat{' '}
+                <strong>H-1 jam / 30 menit sebelum jadwal main</strong> di kasir venue.
+              </p>
+            </div>
+          )}
+
+          {booking.status === 'CONFIRMED' && (
+            <div className="rounded-md border border-line bg-surface-alt p-3 text-xs text-fg-muted">
+              Booking yang sudah dibayar <strong>tidak dapat dibatalkan</strong> dan{' '}
+              <strong>tidak ada pengembalian dana</strong>.
             </div>
           )}
 

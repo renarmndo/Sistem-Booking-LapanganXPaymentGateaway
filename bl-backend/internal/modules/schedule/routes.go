@@ -9,6 +9,7 @@ import (
 
 func RegisterPublicRoutes(mux *http.ServeMux, h *Handler) {
 	mux.HandleFunc("GET /api/v1/fields/{id}/availability", h.GetAvailability)
+	mux.HandleFunc("GET /api/v1/fields/{id}/availability-summary", h.GetAvailabilitySummary)
 }
 
 func RegisterAdminRoutes(mux *http.ServeMux, h *Handler, jwtSecret string) {

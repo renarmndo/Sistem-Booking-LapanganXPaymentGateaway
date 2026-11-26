@@ -120,37 +120,25 @@ export function AdminSettingsPage() {
         <Card>
           <CardHeader>
             <h2 className="font-display text-base font-bold text-ink">
-              Tabel Kebijakan Pembatalan &amp; Refund
+              Ketentuan Pembayaran &amp; Non-Refund
             </h2>
           </CardHeader>
-          <CardBody className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-3">
-              {[
-                'booking.cancel_full_hours',
-                'booking.cancel_partial_hours',
-                'booking.cancel_partial_percent',
-              ].map((key) => (
-                <FormField key={key} label={SETTING_DEFAULTS[key].label} htmlFor={key}>
-                  <Input
-                    id={key}
-                    type="number"
-                    min={0}
-                    max={key === 'booking.cancel_partial_percent' ? 100 : undefined}
-                    value={values[key]}
-                    onChange={(e) => patch(key, e.target.value)}
-                  />
-                </FormField>
-              ))}
-            </div>
-            <div className="rounded-md bg-surface-alt p-3 text-xs text-fg-muted">
-              <p className="font-semibold text-ink">Simulasi Kebijakan Saat Ini:</p>
-              <ul className="mt-1 list-disc space-y-0.5 pl-4">
-                <li>≥ {values['booking.cancel_full_hours']} jam sebelum main → Refund 100%</li>
+          <CardBody>
+            <div className="rounded-md bg-surface-alt p-3.5 text-xs text-fg-muted">
+              <p className="font-semibold text-ink">Kebijakan Aktif Noel Futsal:</p>
+              <ul className="mt-1.5 list-disc space-y-1 pl-4">
                 <li>
-                  {values['booking.cancel_partial_hours']}–{values['booking.cancel_full_hours']} jam
-                  sebelum main → Refund {values['booking.cancel_partial_percent']}%
+                  Pelanggan dapat memilih <strong>Full Payment (100%)</strong> atau{' '}
+                  <strong>DP 50%</strong> saat checkout.
                 </li>
-                <li>&lt; {values['booking.cancel_partial_hours']} jam sebelum main → Tidak dapat refund (0%)</li>
+                <li>
+                  Untuk <strong>DP 50%</strong>, pelunasan sisa 50% wajib dilakukan paling lambat{' '}
+                  <strong>H-1 jam / 30 menit sebelum jadwal main</strong> di kasir.
+                </li>
+                <li>
+                  Booking yang sudah dibayar <strong>tidak dapat dibatalkan</strong> dan{' '}
+                  <strong>tidak ada pengembalian dana (non-refundable)</strong>.
+                </li>
               </ul>
             </div>
           </CardBody>

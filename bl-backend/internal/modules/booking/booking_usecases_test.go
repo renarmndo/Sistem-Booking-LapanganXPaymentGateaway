@@ -86,7 +86,7 @@ func TestCancelMyBooking_TimePolicyScenarios(t *testing.T) {
 		kickoff     time.Time
 		wantPercent int
 		wantAmount  int64
-		wantErr     error
+		wantErr     bool
 	}{
 		{
 			name:        "pending payment cancelled with 0 refund and slot released",
@@ -96,24 +96,10 @@ func TestCancelMyBooking_TimePolicyScenarios(t *testing.T) {
 			wantAmount:  0,
 		},
 		{
-			name:        "confirmed >= 24h cancelled with 100% refund",
-			status:      constant.BookingConfirmed,
-			kickoff:     now.Add(25 * time.Hour),
-			wantPercent: 100,
-			wantAmount:  300000,
-		},
-		{
-			name:        "confirmed 6-24h cancelled with 50% refund",
-			status:      constant.BookingConfirmed,
-			kickoff:     now.Add(12 * time.Hour),
-			wantPercent: 50,
-			wantAmount:  150000,
-		},
-		{
-			name:    "confirmed < 6h rejected with 422",
+			name:    "confirmed booking rejected because paid bookings are non-cancellable",
 			status:  constant.BookingConfirmed,
-			kickoff: now.Add(4 * time.Hour),
-			wantErr: ErrCancelTooLate,
+			kickoff: now.Add(25 * time.Hour),
+			wantErr: true,
 		},
 	}
 
@@ -153,9 +139,9 @@ func TestCancelMyBooking_TimePolicyScenarios(t *testing.T) {
 			}
 
 			res, err := svc.CancelMyBooking(context.Background(), uid, bookingID, "Berubah jadwal")
-			if tc.wantErr != nil {
-				if !errors.Is(err, tc.wantErr) {
-					t.Fatalf("expected error %v, got %v", tc.wantErr, err)
+			if tc.wantErr {
+				if err == nil {
+					t.Fatalf("expected error for confirmed booking cancel, got nil")
 				}
 				return
 			}

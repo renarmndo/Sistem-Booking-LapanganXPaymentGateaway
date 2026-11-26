@@ -339,9 +339,13 @@ func (s *service) applyNotification(
 		}
 
 		var paidAt *time.Time
+		finalPaymentStatus := mapped.PaymentStatus
 		if mapped.PaymentStatus == constant.PaymentPaid {
 			now := s.now()
 			paidAt = &now
+			if info, infoErr := s.bookings.FindBookingForPayment(ctx, p.BookingID); infoErr == nil && info != nil && p.Amount < info.TotalAmount {
+				finalPaymentStatus = constant.PaymentPartial
+			}
 		}
 
 		conflict, err := s.bookings.ApplyPaymentOutcome(
@@ -360,24 +364,15 @@ func (s *service) applyNotification(
 		if conflict && mapped.PaymentStatus == constant.PaymentPaid {
 			needsReview = true
 			finalBookingStatus = constant.BookingExpired
-			if err := txRepo.CreateRefundRequest(ctx, &RefundRequest{
-				BookingID: p.BookingID,
-				PaymentID: p.ID,
-				Amount:    p.Amount,
-				Status:    "pending",
-				Reason:    "Pembayaran masuk setelah booking kedaluwarsa",
-			}); err != nil {
-				return apperror.Internal("DB_ERROR", "Gagal mencatat refund needs_review", err)
-			}
 		}
 
-		if err := txRepo.UpdatePaymentOutcome(ctx, p.ID, mapped.PaymentStatus, channel, txID, paidAt, needsReview); err != nil {
+		if err := txRepo.UpdatePaymentOutcome(ctx, p.ID, finalPaymentStatus, channel, txID, paidAt, needsReview); err != nil {
 			return apperror.Internal("DB_ERROR", "Gagal memperbarui status pembayaran", err)
 		}
 
 		result = SyncPaymentResponse{
 			OrderID:       p.OrderID,
-			PaymentStatus: mapped.PaymentStatus,
+			PaymentStatus: finalPaymentStatus,
 			BookingStatus: finalBookingStatus,
 			NeedsReview:   needsReview,
 		}
@@ -385,6 +380,9 @@ func (s *service) applyNotification(
 	})
 	if err != nil {
 		return nil, err
+	}
+	if s.cache != nil {
+		_ = s.cache.DeleteByPrefix(ctx, "cache:report:")
 	}
 	return &result, nil
 }

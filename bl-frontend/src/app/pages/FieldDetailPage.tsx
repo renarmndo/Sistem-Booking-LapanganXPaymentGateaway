@@ -12,6 +12,7 @@ import {
   SlotLegend,
   StickyBookingBar,
   useAvailability,
+  useAvailabilitySummary,
   useCheckoutDraftStore,
   useSlotSelection,
 } from '@/features/booking'
@@ -48,7 +49,35 @@ export function FieldDetailPage() {
 
   const fieldQuery = useFieldDetail(id)
   const availabilityQuery = useAvailability(id, selectedDate)
+  const summaryQuery = useAvailabilitySummary(id)
   const slots = useMemo(() => availabilityQuery.data ?? [], [availabilityQuery.data])
+  const availabilityMap = useMemo(() => {
+    const map: Record<string, { available_slots: number; total_slots: number }> = {}
+    for (const item of summaryQuery.data ?? []) {
+      map[item.date] = {
+        available_slots: item.available_slots,
+        total_slots: item.total_slots,
+      }
+    }
+    return map
+  }, [summaryQuery.data])
+
+  const periodAvailabilityCounts = useMemo(() => {
+    let all = 0
+    let morning = 0
+    let afternoon = 0
+    let night = 0
+    for (const slot of slots) {
+      if (slot.status !== 'available') continue
+      all += 1
+      const hour = Number(slot.start_time.split(':')[0])
+      if (hour < 12) morning += 1
+      else if (hour < 18) afternoon += 1
+      else night += 1
+    }
+    return { all, morning, afternoon, night }
+  }, [slots])
+
   const filteredSlots = useMemo(() => {
     if (slotPeriod === 'all') return slots
     return slots.filter((slot) => {
@@ -186,7 +215,7 @@ export function FieldDetailPage() {
               { id: 'jadwal', label: 'Jadwal & Slot Lapangan' },
               { id: 'spesifikasi', label: 'Spesifikasi & Tarif' },
               { id: 'fasilitas', label: 'Fasilitas', badge: field.facilities.length },
-              { id: 'aturan', label: 'Aturan & Pembatalan' },
+              { id: 'aturan', label: 'Aturan & Pembayaran' },
             ]}
           />
 
@@ -221,17 +250,33 @@ export function FieldDetailPage() {
               </div>
 
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-ink">Pilih Tanggal Booking</p>
-                <DateStrip selectedDate={selectedDate} onSelectDate={handleDateChange} />
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-ink">Pilih Tanggal Booking</p>
+                  {!availabilityQuery.isLoading && (
+                    <Badge
+                      variant={periodAvailabilityCounts.all > 0 ? 'primary' : 'neutral'}
+                      size="sm"
+                    >
+                      {periodAvailabilityCounts.all > 0
+                        ? `${periodAvailabilityCounts.all} jadwal tersedia`
+                        : 'Jadwal penuh'}
+                    </Badge>
+                  )}
+                </div>
+                <DateStrip
+                  selectedDate={selectedDate}
+                  onSelectDate={handleDateChange}
+                  availabilityMap={availabilityMap}
+                />
               </div>
 
               <div className="flex flex-wrap items-center gap-2 border-y border-line py-3">
                 {(
                   [
-                    { id: 'all', label: `Semua Slot (${slots.length})` },
-                    { id: 'morning', label: 'Pagi (06:00–12:00)' },
-                    { id: 'afternoon', label: 'Siang & Sore (12:00–18:00)' },
-                    { id: 'night', label: 'Prime Time Malam (18:00–24:00)' },
+                    { id: 'all', label: `Semua (${periodAvailabilityCounts.all} tersedia)` },
+                    { id: 'morning', label: `Pagi 06–12 (${periodAvailabilityCounts.morning})` },
+                    { id: 'afternoon', label: `Siang & Sore 12–18 (${periodAvailabilityCounts.afternoon})` },
+                    { id: 'night', label: `Malam 18–24 (${periodAvailabilityCounts.night})` },
                   ] as const
                 ).map((period) => (
                   <button
@@ -295,13 +340,14 @@ export function FieldDetailPage() {
             <Card padding="md" className="space-y-4">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-primary-700" aria-hidden="true" />
-                <h2 className="font-display text-lg font-bold text-ink">Aturan Venue &amp; Kebijakan Pembatalan</h2>
+                <h2 className="font-display text-lg font-bold text-ink">Aturan Venue &amp; Ketentuan Pembayaran</h2>
               </div>
               <ul className="space-y-2.5 text-sm text-fg-muted">
                 <li>&bull; Harap tiba minimal 15 menit sebelum jadwal bermain dimulai untuk check-in di meja kasir.</li>
                 <li>&bull; Wajib menggunakan sepatu futsal atau sepatu olahraga non-marking yang bersih.</li>
                 <li>&bull; Dilarang membawa makanan, minuman keras, atau merokok di dalam area lapangan.</li>
-                <li>&bull; Pembatalan atau pengajuan refund mengikuti ketentuan waktu minimal sebelum jam main di portal Riwayat Booking.</li>
+                <li>&bull; <strong>Pembayaran Full Payment (100%):</strong> tidak dapat dibatalkan dan <strong>tidak ada pengembalian dana</strong>.</li>
+                <li>&bull; <strong>Pembayaran DP 50%:</strong> pelunasan sisa 50% wajib dilakukan paling lambat <strong>H-1 jam / 30 menit sebelum jadwal main</strong> dan tidak dapat dibatalkan.</li>
               </ul>
             </Card>
           )}

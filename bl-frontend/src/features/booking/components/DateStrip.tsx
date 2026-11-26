@@ -5,6 +5,7 @@ export interface DateStripProps {
   selectedDate: string
   onSelectDate: (date: string) => void
   maxDaysAhead?: number
+  availabilityMap?: Record<string, { available_slots: number; total_slots: number }>
   className?: string
 }
 
@@ -22,6 +23,7 @@ export function DateStrip({
   selectedDate,
   onSelectDate,
   maxDaysAhead = 30,
+  availabilityMap,
   className,
 }: DateStripProps) {
   const days = useMemo(() => {
@@ -50,6 +52,7 @@ export function DateStrip({
     >
       {days.map((item) => {
         const isSelected = item.ymd === selectedDate
+        const summary = availabilityMap?.[item.ymd]
         return (
           <button
             key={item.ymd}
@@ -58,7 +61,7 @@ export function DateStrip({
             aria-selected={isSelected}
             onClick={() => onSelectDate(item.ymd)}
             className={cn(
-              'flex min-w-16 shrink-0 flex-col items-center rounded-md border px-3 py-2.5 transition',
+              'flex min-w-20 shrink-0 flex-col items-center rounded-md border px-3 py-2.5 transition',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300',
               isSelected
                 ? 'border-primary-950 bg-primary-950 text-surface shadow-xs'
@@ -77,6 +80,22 @@ export function DateStrip({
             <span className={cn('text-[11px]', isSelected ? 'text-primary-200' : 'text-fg-muted')}>
               {item.monthLabel}
             </span>
+            {summary && (
+              <span
+                className={cn(
+                  'mt-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none',
+                  summary.available_slots > 0
+                    ? isSelected
+                      ? 'bg-gold-400/20 text-gold-300'
+                      : 'bg-primary-50 text-primary-800'
+                    : isSelected
+                      ? 'bg-surface/10 text-primary-300'
+                      : 'bg-surface-alt text-fg-muted',
+                )}
+              >
+                {summary.available_slots > 0 ? `${summary.available_slots} slot` : 'Penuh'}
+              </span>
+            )}
           </button>
         )
       })}

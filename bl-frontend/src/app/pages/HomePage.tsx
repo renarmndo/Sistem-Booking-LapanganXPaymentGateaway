@@ -58,7 +58,6 @@ const EASE_OUT = [0.22, 1, 0.36, 1] as const
 export function HomePage() {
   const navigate = useNavigate()
   const [date, setDate] = useState('')
-  const [startTime, setStartTime] = useState('19:00')
   const [format, setFormat] = useState('')
   const [openFaq, setOpenFaq] = useState<number | null>(0)
 
@@ -69,7 +68,6 @@ export function HomePage() {
     e.preventDefault()
     const params = new URLSearchParams()
     if (date) params.set('date', date)
-    if (startTime) params.set('time', startTime)
     if (format) params.set('surface_type', format)
     const query = params.toString()
     navigate(query ? `${PATHS.FIELDS}?${query}` : PATHS.FIELDS)
@@ -121,29 +119,13 @@ export function HomePage() {
               className="mx-auto mt-8 max-w-4xl rounded-xl border border-gold-400/25 bg-surface/95 p-4 text-left text-fg shadow-2xl backdrop-blur-md sm:p-5"
             >
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-12 lg:items-end">
-                <div className="space-y-1.5 lg:col-span-3">
+                <div className="space-y-1.5 lg:col-span-4">
                   <label htmlFor="hero-date" className="block text-xs font-semibold text-fg-muted">
                     Tanggal Main
                   </label>
                   <Input id="hero-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
                 </div>
-                <div className="space-y-1.5 lg:col-span-3">
-                  <label htmlFor="hero-time" className="block text-xs font-semibold text-fg-muted">
-                    Jam Mulai
-                  </label>
-                  <Select
-                    id="hero-time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    options={[
-                      { value: '08:00', label: '08:00 WIB (Pagi)' },
-                      { value: '16:00', label: '16:00 WIB (Sore)' },
-                      { value: '19:00', label: '19:00 WIB (Malam)' },
-                      { value: '21:00', label: '21:00 WIB (Malam)' },
-                    ]}
-                  />
-                </div>
-                <div className="space-y-1.5 lg:col-span-3">
+                <div className="space-y-1.5 lg:col-span-4">
                   <label htmlFor="hero-format" className="block text-xs font-semibold text-fg-muted">
                     Jenis Permukaan
                   </label>
@@ -159,7 +141,7 @@ export function HomePage() {
                     ]}
                   />
                 </div>
-                <div className="lg:col-span-3">
+                <div className="sm:col-span-2 lg:col-span-4">
                   <Button type="submit" variant="accent" fullWidth className="h-10 font-bold">
                     <Search className="h-4 w-4" aria-hidden="true" />
                     <span>Cari Jadwal</span>

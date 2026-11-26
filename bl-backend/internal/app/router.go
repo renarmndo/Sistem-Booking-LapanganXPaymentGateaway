@@ -180,7 +180,11 @@ func (a *bookingPaymentGatewayAdapter) CreatePayment(ctx context.Context, b *boo
 	if b.ExpiresAt != nil {
 		exp = *b.ExpiresAt
 	}
-	res, err := a.payments.CreateForBooking(ctx, b.ID, b.Code, b.TotalAmount, exp, nil)
+	payAmount := b.TotalAmount
+	if b.InitialPayAmount > 0 && b.InitialPayAmount <= b.TotalAmount {
+		payAmount = b.InitialPayAmount
+	}
+	res, err := a.payments.CreateForBooking(ctx, b.ID, b.Code, payAmount, exp, nil)
 	if err != nil {
 		return nil, err
 	}

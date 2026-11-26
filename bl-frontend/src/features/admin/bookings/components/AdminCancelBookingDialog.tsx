@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Button, FormField, Input, Modal, Textarea } from '@/components/ui'
+import { Button, FormField, Modal, Textarea } from '@/components/ui'
 import { useAdminCancelBooking } from '../../hooks/useAdminOps'
 import type { AdminBookingItem } from '../../types/adminOps.types'
 
@@ -26,8 +26,6 @@ export function AdminCancelBookingDialog({ booking, onClose }: AdminCancelBookin
 
 function AdminCancelForm({ booking, onClose }: { booking: AdminBookingItem; onClose: () => void }) {
   const [reason, setReason] = useState('')
-  const [createRefund, setCreateRefund] = useState(booking.status === 'CONFIRMED')
-  const [refundAmount, setRefundAmount] = useState(booking.total_amount)
   const cancelMutation = useAdminCancelBooking()
 
   const handleSubmit = (e: FormEvent) => {
@@ -37,8 +35,8 @@ function AdminCancelForm({ booking, onClose }: { booking: AdminBookingItem; onCl
         bookingId: booking.id,
         payload: {
           reason: reason.trim(),
-          create_refund: createRefund,
-          refund_amount: createRefund ? refundAmount : 0,
+          create_refund: false,
+          refund_amount: 0,
         },
       },
       { onSuccess: () => onClose() },
@@ -53,40 +51,10 @@ function AdminCancelForm({ booking, onClose }: { booking: AdminBookingItem; onCl
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           rows={3}
-          placeholder="Contoh: Hujan deras / Permintaan pelanggan langsung"
+          placeholder="Contoh: Hujan deras / Penjadwalan ulang dari pengelola"
           required
         />
       </FormField>
-
-      {booking.status === 'CONFIRMED' && (
-        <div className="space-y-2 rounded-md border border-line bg-surface-alt p-3">
-          <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-ink">
-            <input
-              type="checkbox"
-              checked={createRefund}
-              onChange={(e) => setCreateRefund(e.target.checked)}
-              className="h-4 w-4 accent-primary-900"
-            />
-            <span>Buat permintaan refund untuk pelanggan</span>
-          </label>
-          {createRefund && (
-            <FormField label="Nominal Refund (Rp)" htmlFor="admin-refund-amt">
-              <Input
-                id="admin-refund-amt"
-                type="text"
-                inputMode="numeric"
-                placeholder="0"
-                value={refundAmount === 0 ? '' : String(refundAmount)}
-                onChange={(e) => {
-                  const digits = e.target.value.replace(/\D/g, '')
-                  const parsed = digits === '' ? 0 : Number(digits)
-                  setRefundAmount(Math.min(parsed, booking.total_amount))
-                }}
-              />
-            </FormField>
-          )}
-        </div>
-      )}
 
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="secondary" onClick={onClose}>

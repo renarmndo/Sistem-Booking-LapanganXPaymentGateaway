@@ -208,7 +208,7 @@ func (r *gormRepository) GetPaidRevenueSummary(ctx context.Context, ownerID *uin
 		Joins("JOIN bookings b ON b.id = p.booking_id").
 		Joins("JOIN fields f ON f.id = b.field_id").
 		Joins(processedRefundsSubquery).
-		Where("f.deleted_at IS NULL AND p.status = 'paid' AND b.booking_date >= ? AND b.booking_date <= ?", from, to)
+		Where("f.deleted_at IS NULL AND p.status IN ('paid','partial') AND b.booking_date >= ? AND b.booking_date <= ?", from, to)
 	q = whereOwner(q, ownerID)
 	if fieldID != nil {
 		q = q.Where("b.field_id = ?", *fieldID)
@@ -236,7 +236,7 @@ func (r *gormRepository) GetRevenueSeries(ctx context.Context, ownerID *uint, fi
 		Joins("JOIN bookings b ON b.id = p.booking_id").
 		Joins("JOIN fields f ON f.id = b.field_id").
 		Joins(processedRefundsSubquery).
-		Where("f.deleted_at IS NULL AND p.status = 'paid' AND b.booking_date >= ? AND b.booking_date <= ?", from, to)
+		Where("f.deleted_at IS NULL AND p.status IN ('paid','partial') AND b.booking_date >= ? AND b.booking_date <= ?", from, to)
 	q = whereOwner(q, ownerID)
 	if fieldID != nil {
 		q = q.Where("b.field_id = ?", *fieldID)

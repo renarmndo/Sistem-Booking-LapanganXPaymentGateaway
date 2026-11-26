@@ -23,9 +23,10 @@ type Booking struct {
 	CancelledAt  *time.Time
 	CancelReason string                 `gorm:"size:255"`
 	CreatedBy    *uint
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	Slots        []BookingSlot          `gorm:"foreignKey:BookingID"`
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+	Slots            []BookingSlot          `gorm:"foreignKey:BookingID"`
+	InitialPayAmount int64                  `gorm:"-"`
 }
 
 func (Booking) TableName() string { return "bookings" }

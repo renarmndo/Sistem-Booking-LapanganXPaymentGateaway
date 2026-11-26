@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AlertCircle, Check, ChevronDown, ShieldCheck } from 'lucide-react'
+import { AlertCircle, Banknote, Check, ChevronDown, Clock, ShieldCheck, Wallet } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { PATHS } from '@/app/router/paths'
 import { PageHeader } from '@/components/layout'
@@ -11,6 +11,7 @@ import { formatDate } from '@/utils/formatDate'
 import { formatSlotRange } from '@/utils/slot.utils'
 import { useCreateBooking } from '../hooks/useCreateBooking'
 import { useCheckoutDraftStore } from '../store/checkoutDraft.store'
+import type { PaymentType } from '../types/booking.types'
 
 const STEPS = [
   { num: 1, label: 'Pilih Jadwal', done: true },
@@ -23,6 +24,7 @@ export function CheckoutPage() {
   const createBooking = useCreateBooking()
 
   const [policyOpen, setPolicyOpen] = useState(true)
+  const [paymentType, setPaymentType] = useState<PaymentType>('full')
   const [agreed, setAgreed] = useState(false)
 
   if (!draft || draft.slots.length === 0) {
@@ -42,6 +44,8 @@ export function CheckoutPage() {
   }
 
   const timeRange = formatSlotRange(draft.slots)
+  const payAmount = paymentType === 'dp' ? Math.floor(draft.totalAmount / 2) : draft.totalAmount
+  const remainingAmount = draft.totalAmount - payAmount
   const errorMessage = createBooking.isError
     ? getErrorMessage(createBooking.error, 'Gagal memproses booking.')
     : null
@@ -55,6 +59,7 @@ export function CheckoutPage() {
         start_time: s.start_time,
         end_time: s.end_time,
       })),
+      payment_type: paymentType,
     })
   }
 
@@ -146,7 +151,111 @@ export function CheckoutPage() {
             </CardBody>
           </Card>
 
-          {/* Cancellation Policy Accordion */}
+          {/* Payment Option Selector */}
+          <Card padding="md" className="space-y-4">
+            <div>
+              <h2 className="font-display text-base font-bold text-ink">Pilih Skema Pembayaran</h2>
+              <p className="text-xs text-fg-muted">
+                Pilih pembayaran penuh atau uang muka (DP 50%) untuk mengunci jadwal Anda.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Skema Pembayaran">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={paymentType === 'full'}
+                onClick={() => setPaymentType('full')}
+                className={cn(
+                  'flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition',
+                  paymentType === 'full'
+                    ? 'border-primary-700 bg-primary-50/70 ring-2 ring-primary-200'
+                    : 'border-line bg-surface hover:border-primary-300',
+                )}
+              >
+                <div className="flex w-full items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-bold text-ink">
+                    <Wallet className="h-4 w-4 text-primary-700" aria-hidden="true" />
+                    Full Payment (100%)
+                  </span>
+                  <span
+                    className={cn(
+                      'flex h-4 w-4 items-center justify-center rounded-full border',
+                      paymentType === 'full'
+                        ? 'border-primary-700 bg-primary-700 text-surface'
+                        : 'border-line-strong',
+                    )}
+                  >
+                    {paymentType === 'full' && <Check className="h-2.5 w-2.5" aria-hidden="true" />}
+                  </span>
+                </div>
+                <CurrencyText value={draft.totalAmount} className="text-base font-extrabold text-primary-900" />
+                <p className="text-xs leading-relaxed text-fg-muted">
+                  Bayar lunas sekarang. <strong>Tidak ada pengembalian dana</strong> dan tidak dapat dibatalkan.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                role="radio"
+                aria-checked={paymentType === 'dp'}
+                onClick={() => setPaymentType('dp')}
+                className={cn(
+                  'flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition',
+                  paymentType === 'dp'
+                    ? 'border-gold-600 bg-gold-50/70 ring-2 ring-gold-200'
+                    : 'border-line bg-surface hover:border-gold-400',
+                )}
+              >
+                <div className="flex w-full items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-bold text-ink">
+                    <Banknote className="h-4 w-4 text-gold-700" aria-hidden="true" />
+                    DP 50%
+                  </span>
+                  <span
+                    className={cn(
+                      'flex h-4 w-4 items-center justify-center rounded-full border',
+                      paymentType === 'dp'
+                        ? 'border-gold-600 bg-gold-600 text-surface'
+                        : 'border-line-strong',
+                    )}
+                  >
+                    {paymentType === 'dp' && <Check className="h-2.5 w-2.5" aria-hidden="true" />}
+                  </span>
+                </div>
+                <CurrencyText
+                  value={Math.floor(draft.totalAmount / 2)}
+                  className="text-base font-extrabold text-ink"
+                />
+                <p className="text-xs leading-relaxed text-fg-muted">
+                  Pelunasan sisa 50% wajib dilakukan <strong>H-1 jam / 30 menit sebelum main</strong>.
+                </p>
+              </button>
+            </div>
+
+            {paymentType === 'dp' ? (
+              <div className="flex items-start gap-2.5 rounded-lg border border-gold-300 bg-gold-50/80 p-3 text-xs text-gold-900">
+                <Clock className="mt-0.5 h-4 w-4 shrink-0 text-gold-700" aria-hidden="true" />
+                <p className="leading-relaxed">
+                  <strong>Catatan DP 50%:</strong> Sisa pembayaran sebesar{' '}
+                  <strong>Rp {remainingAmount.toLocaleString('id-ID')}</strong> wajib dilunasi paling
+                  lambat <strong>H-1 jam / 30 menit sebelum jadwal main</strong> di kasir venue.
+                  Booking yang sudah dibayar <strong>tidak dapat dibatalkan</strong>.
+                </p>
+              </div>
+            ) : (
+              <div className="flex items-start gap-2.5 rounded-lg border border-primary-200 bg-primary-50/70 p-3 text-xs text-primary-900">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary-700" aria-hidden="true" />
+                <p className="leading-relaxed">
+                  <strong>Catatan Full Payment:</strong> Pembayaran bersifat final,{' '}
+                  <strong>tidak dapat dibatalkan</strong>, dan{' '}
+                  <strong>tidak ada pengembalian dana</strong> setelah pembayaran berhasil.
+                </p>
+              </div>
+            )}
+          </Card>
+
+          {/* Payment Terms Accordion */}
           <Card padding="none" className="overflow-hidden">
             <button
               type="button"
@@ -156,7 +265,7 @@ export function CheckoutPage() {
             >
               <span className="inline-flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-primary-700" aria-hidden="true" />
-                Kebijakan Pembatalan &amp; Refund
+                Ketentuan Pembayaran &amp; Booking
               </span>
               <ChevronDown
                 className={cn(
@@ -168,10 +277,9 @@ export function CheckoutPage() {
             </button>
             {policyOpen && (
               <div className="space-y-2 border-t border-line px-5 py-4 text-xs leading-relaxed text-fg-muted">
-                <p>&bull; Pembatalan &ge; 24 jam sebelum kick-off: refund 100%.</p>
-                <p>&bull; Pembatalan 6 – &lt;24 jam sebelum kick-off: refund 50%.</p>
-                <p>&bull; Pembatalan &lt; 6 jam sebelum kick-off: tidak dapat dibatalkan oleh pengguna.</p>
-                <p>&bull; Batas waktu pembayaran adalah 15 menit setelah booking dibuat.</p>
+                <p>&bull; Booking yang sudah dibayar <strong>tidak dapat dibatalkan</strong> dan <strong>tidak ada pengembalian dana</strong>.</p>
+                <p>&bull; Untuk opsi <strong>DP 50%</strong>, pelunasan sisa 50% wajib dilakukan paling lambat <strong>H-1 jam / 30 menit sebelum jadwal main</strong>.</p>
+                <p>&bull; Batas waktu menyelesaikan pembayaran online adalah <strong>15 menit</strong> setelah booking dibuat.</p>
               </div>
             )}
           </Card>
@@ -180,11 +288,29 @@ export function CheckoutPage() {
         {/* Sticky Payment Confirmation Panel */}
         <aside className="lg:col-span-5">
           <Card padding="md" className="space-y-4 lg:sticky lg:top-20">
-            <h2 className="font-display text-lg font-bold text-ink">Total Pembayaran</h2>
+            <h2 className="font-display text-lg font-bold text-ink">Ringkasan Pembayaran</h2>
 
-            <div className="flex items-center justify-between border-y border-line py-3">
-              <span className="text-sm text-fg-muted">Total ({draft.slots.length} slot)</span>
-              <CurrencyText value={draft.totalAmount} className="text-xl font-bold text-ink" />
+            <div className="space-y-2 border-y border-line py-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-fg-muted">Total Harga ({draft.slots.length} slot)</span>
+                <CurrencyText value={draft.totalAmount} className="font-semibold text-ink" />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-fg-muted">Skema Dipilih</span>
+                <span className="font-semibold text-ink">
+                  {paymentType === 'dp' ? 'DP 50%' : 'Full Payment (100%)'}
+                </span>
+              </div>
+              {paymentType === 'dp' && (
+                <div className="flex items-center justify-between text-xs text-fg-muted">
+                  <span>Sisa Pelunasan (H-1 jam / 30 mnt)</span>
+                  <CurrencyText value={remainingAmount} className="font-semibold text-ink" />
+                </div>
+              )}
+              <div className="flex items-center justify-between border-t border-line pt-2.5">
+                <span className="font-semibold text-ink">Bayar Sekarang</span>
+                <CurrencyText value={payAmount} className="text-xl font-bold text-primary-900" />
+              </div>
             </div>
 
             <label className="flex cursor-pointer items-start gap-2.5 text-xs leading-relaxed text-fg">
@@ -195,8 +321,8 @@ export function CheckoutPage() {
                 className="mt-0.5 h-4 w-4 rounded border-line-strong text-primary-700"
               />
               <span>
-                Saya menyetujui rincian jadwal, ketentuan batas pembayaran 15 menit, dan kebijakan
-                pembatalan yang berlaku.
+                Saya menyetujui rincian jadwal, ketentuan bahwa booking tidak dapat dibatalkan / tidak
+                ada pengembalian dana, serta batas pelunasan DP jika memilih DP 50%.
               </span>
             </label>
 
@@ -208,7 +334,7 @@ export function CheckoutPage() {
               loading={createBooking.isPending}
               onClick={handleConfirm}
             >
-              Buat Booking &amp; Lanjut Pembayaran
+              {paymentType === 'dp' ? 'Bayar DP 50% Sekarang' : 'Buat Booking & Bayar Penuh'}
             </Button>
           </Card>
         </aside>
@@ -218,8 +344,10 @@ export function CheckoutPage() {
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 px-4 py-3 shadow-lg backdrop-blur lg:hidden">
         <div className="flex w-full items-center justify-between gap-3">
           <div>
-            <p className="text-xs text-fg-muted">Total Bayar</p>
-            <CurrencyText value={draft.totalAmount} className="text-base font-bold text-ink" />
+            <p className="text-xs text-fg-muted">
+              {paymentType === 'dp' ? 'Bayar DP 50%' : 'Total Bayar'}
+            </p>
+            <CurrencyText value={payAmount} className="text-base font-bold text-ink" />
           </div>
           <Button
             variant="accent"

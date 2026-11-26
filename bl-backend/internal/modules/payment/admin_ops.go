@@ -97,7 +97,7 @@ type AdminPaymentResult struct {
 type AdminPaymentRepository interface {
 	FindByID(ctx context.Context, id uint) (*Payment, error)
 	FindByBookingIDForUpdate(ctx context.Context, bookingID uint) (*Payment, error)
-	UpdateAdminPayment(ctx context.Context, id uint, status constant.PaymentStatus, method string, recordedBy uint, paidAt *time.Time) error
+	UpdateAdminPayment(ctx context.Context, id uint, status constant.PaymentStatus, method string, amount int64, recordedBy uint, paidAt *time.Time) error
 	FindPaymentLogsByPaymentID(ctx context.Context, paymentID uint) ([]PaymentLog, error)
 	ListAdminTransactions(ctx context.Context, filter AdminTransactionFilter) ([]AdminTransactionItem, AdminTransactionSummary, int64, error)
 	GetAdminTransactionDetail(ctx context.Context, id uint) (*AdminTransactionDetailResponse, error)
@@ -128,11 +128,14 @@ func (r *gormRepository) FindByBookingIDForUpdate(ctx context.Context, bookingID
 	return &p, err
 }
 
-func (r *gormRepository) UpdateAdminPayment(ctx context.Context, id uint, status constant.PaymentStatus, method string, recordedBy uint, paidAt *time.Time) error {
+func (r *gormRepository) UpdateAdminPayment(ctx context.Context, id uint, status constant.PaymentStatus, method string, amount int64, recordedBy uint, paidAt *time.Time) error {
 	updates := map[string]any{
 		"status":      status,
 		"method":      method,
 		"recorded_by": recordedBy,
+	}
+	if amount > 0 {
+		updates["amount"] = amount
 	}
 	if paidAt != nil {
 		updates["paid_at"] = *paidAt
@@ -367,7 +370,7 @@ func (s *service) RecordAdminPayment(ctx context.Context, bookingID, adminID uin
 			paidAt = &now
 		}
 
-		if err := adminTxRepo.UpdateAdminPayment(ctx, p.ID, newStatus, method, adminID, paidAt); err != nil {
+		if err := adminTxRepo.UpdateAdminPayment(ctx, p.ID, newStatus, method, newPaidTotal, adminID, paidAt); err != nil {
 			return err
 		}
 
@@ -399,11 +402,17 @@ func (s *service) RecordAdminPayment(ctx context.Context, bookingID, adminID uin
 	if err != nil {
 		return nil, err
 	}
+	if s.cache != nil {
+		_ = s.cache.DeleteByPrefix(ctx, "cache:report:")
+	}
 	return &result, nil
 }
 
 func sumPaidFromLogs(p *Payment, logs []PaymentLog) int64 {
 	var total int64
+	if p.Method == "midtrans" && (p.Status == constant.PaymentPartial || p.Status == constant.PaymentPaid) {
+		total += p.Amount
+	}
 	for _, l := range logs {
 		if l.Event == "offline_payment" || l.Event == "admin_payment" {
 			var payload struct {

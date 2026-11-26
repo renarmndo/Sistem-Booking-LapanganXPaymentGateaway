@@ -50,6 +50,7 @@ type BookingConflictChecker interface {
 
 type Service interface {
 	GetAvailability(ctx context.Context, fieldID uint, dateStr string) ([]SlotItem, error)
+	GetAvailabilitySummary(ctx context.Context, fieldID uint, fromStr, toStr string) ([]DateAvailabilitySummary, error)
 	SetBlockDeps(repo BlockRepository, conflicts BookingConflictChecker)
 	ListBlocks(ctx context.Context, filter ScheduleBlockFilter) (*PaginatedScheduleBlocksResponse, error)
 	CreateBlock(ctx context.Context, adminID uint, req CreateScheduleBlockRequest) (*ScheduleBlockResponse, []ConflictingBooking, error)
@@ -83,6 +84,66 @@ func NewServiceWithCache(fields FieldProvider, settings SettingReader, occupancy
 		cache:     c,
 		now:       timeutil.Now,
 	}
+}
+
+func (s *service) GetAvailabilitySummary(ctx context.Context, fieldID uint, fromStr, toStr string) ([]DateAvailabilitySummary, error) {
+	now := s.now().In(timeutil.WIB)
+	today := timeutil.StartOfDay(now)
+	maxDays := defaultMaxDaysAhead
+	if s.settings != nil {
+		maxDays = s.settings.GetInt(ctx, "booking.max_days_ahead", defaultMaxDaysAhead)
+	}
+	if maxDays <= 0 {
+		maxDays = defaultMaxDaysAhead
+	}
+
+	fromDate := today
+	if strings.TrimSpace(fromStr) != "" {
+		parsed, err := timeutil.ParseDate(strings.TrimSpace(fromStr))
+		if err != nil {
+			return nil, ErrInvalidDate
+		}
+		if parsed.After(today) {
+			fromDate = parsed
+		}
+	}
+
+	maxEnd := today.AddDate(0, 0, maxDays)
+	toDate := maxEnd
+	if strings.TrimSpace(toStr) != "" {
+		parsed, err := timeutil.ParseDate(strings.TrimSpace(toStr))
+		if err != nil {
+			return nil, ErrInvalidDate
+		}
+		toDate = parsed
+	}
+	if toDate.After(maxEnd) {
+		toDate = maxEnd
+	}
+	if fromDate.After(toDate) {
+		return []DateAvailabilitySummary{}, nil
+	}
+
+	summaries := make([]DateAvailabilitySummary, 0, 31)
+	for d := fromDate; !d.After(toDate) && len(summaries) < 31; d = d.AddDate(0, 0, 1) {
+		dateStr := d.Format(timeutil.DateLayout)
+		slots, err := s.GetAvailability(ctx, fieldID, dateStr)
+		if err != nil {
+			return nil, err
+		}
+		avail := 0
+		for _, sl := range slots {
+			if sl.Status == SlotAvailable {
+				avail++
+			}
+		}
+		summaries = append(summaries, DateAvailabilitySummary{
+			Date:           dateStr,
+			AvailableSlots: avail,
+			TotalSlots:     len(slots),
+		})
+	}
+	return summaries, nil
 }
 
 func (s *service) GetAvailability(ctx context.Context, fieldID uint, dateStr string) ([]SlotItem, error) {

@@ -45,6 +45,27 @@ func (h *Handler) GetAvailability(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, status, body)
 }
 
+func (h *Handler) GetAvailabilitySummary(w http.ResponseWriter, r *http.Request) {
+	rawID := r.PathValue("id")
+	id, err := strconv.ParseUint(rawID, 10, 64)
+	if err != nil || id == 0 {
+		status, body := response.Fail("ID lapangan tidak valid", "INVALID_ID")
+		writeJSON(w, status, body)
+		return
+	}
+
+	q := r.URL.Query()
+	items, err := h.svc.GetAvailabilitySummary(r.Context(), uint(id), q.Get("from"), q.Get("to"))
+	if err != nil {
+		status, body := response.FromError(err)
+		writeJSON(w, status, body)
+		return
+	}
+
+	status, body := response.Success("Ringkasan ketersediaan jadwal", items)
+	writeJSON(w, status, body)
+}
+
 func (h *Handler) ListBlocks(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	pq := pagination.Parse(q.Get("page"), q.Get("limit"))

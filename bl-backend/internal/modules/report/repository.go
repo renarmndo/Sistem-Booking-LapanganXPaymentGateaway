@@ -55,7 +55,7 @@ func (r *gormRepository) GetAdminDashboardSummary(ctx context.Context, from, to 
 		Table("payments p").
 		Joins("JOIN bookings b ON b.id = p.booking_id").
 		Joins(processedRefundsSubquery).
-		Select("COALESCE(SUM(CASE WHEN p.status = 'paid' THEN GREATEST(p.amount - COALESCE(rr.refunded_amount, 0), 0) ELSE 0 END), 0) AS paid_revenue").
+		Select("COALESCE(SUM(CASE WHEN p.status IN ('paid','partial') THEN GREATEST(p.amount - COALESCE(rr.refunded_amount, 0), 0) ELSE 0 END), 0) AS paid_revenue").
 		Where("b.booking_date >= ? AND b.booking_date <= ?", from, to).
 		Scan(&rev).Error; err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (r *gormRepository) GetAdminDashboardSummary(ctx context.Context, from, to 
 
 	if err := r.db.WithContext(ctx).
 		Table("bookings b").
-		Joins("LEFT JOIN payments p ON p.booking_id = b.id AND p.status = 'paid'").
+		Joins("LEFT JOIN payments p ON p.booking_id = b.id AND p.status IN ('paid','partial')").
 		Joins(processedRefundsSubquery).
 		Select("DATE_FORMAT(b.booking_date, '%Y-%m-%d') AS date, COUNT(DISTINCT b.id) AS bookings, COALESCE(SUM(CASE WHEN p.id IS NOT NULL THEN GREATEST(p.amount - COALESCE(rr.refunded_amount, 0), 0) ELSE 0 END), 0) AS revenue").
 		Where("b.booking_date >= ? AND b.booking_date <= ?", from, to).
@@ -108,7 +108,7 @@ func (r *gormRepository) GetAdminDashboardSummary(ctx context.Context, from, to 
 	if err := r.db.WithContext(ctx).
 		Table("bookings b").
 		Joins("JOIN fields f ON f.id = b.field_id").
-		Joins("LEFT JOIN payments p ON p.booking_id = b.id AND p.status = 'paid'").
+		Joins("LEFT JOIN payments p ON p.booking_id = b.id AND p.status IN ('paid','partial')").
 		Joins(processedRefundsSubquery).
 		Select("b.field_id, f.name AS field_name, COUNT(DISTINCT b.id) AS bookings, COALESCE(SUM(CASE WHEN p.id IS NOT NULL THEN GREATEST(p.amount - COALESCE(rr.refunded_amount, 0), 0) ELSE 0 END), 0) AS revenue").
 		Where("b.booking_date >= ? AND b.booking_date <= ? AND b.status IN ('CONFIRMED','COMPLETED')", from, to).

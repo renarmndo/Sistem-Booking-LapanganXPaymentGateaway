@@ -23,6 +23,12 @@ type SlotItem struct {
 	Status    SlotStatus `json:"status"`
 }
 
+type DateAvailabilitySummary struct {
+	Date           string `json:"date"`
+	AvailableSlots int    `json:"available_slots"`
+	TotalSlots     int    `json:"total_slots"`
+}
+
 type FieldScheduleInfo struct {
 	ID        uint
 	IsActive  bool
