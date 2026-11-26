@@ -1,11 +1,10 @@
-import { CalendarCheck2, Home, Search, User } from 'lucide-react'
+import { CalendarCheck2, Home, User } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { PATHS } from '@/app/router/paths'
 import { cn } from '@/utils/cn'
 
 const ITEMS = [
   { to: PATHS.HOME, label: 'Beranda', icon: Home },
-  { to: PATHS.FIELDS, label: 'Lapangan', icon: Search },
   { to: PATHS.MY_BOOKINGS, label: 'Booking', icon: CalendarCheck2 },
   { to: PATHS.ACCOUNT, label: 'Akun', icon: User },
 ]
@@ -16,7 +15,7 @@ export function BottomNav() {
       aria-label="Navigasi bawah"
       className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface md:hidden"
     >
-      <div className="grid h-16 grid-cols-4">
+      <div className="grid h-16 grid-cols-3">
         {ITEMS.map((item) => {
           const Icon = item.icon
           return (

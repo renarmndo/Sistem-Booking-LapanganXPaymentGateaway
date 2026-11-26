@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
-import { ArrowRight, Check, ChevronDown, Search } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Check, ChevronDown, Eye, Search } from 'lucide-react'
 import heroArenaImg from '@/assets/hero-arena.jpg'
 import promoArenaImg from '@/assets/promo-arena.jpg'
-import { PATHS } from '@/app/router/paths'
-import { EmptyState, ErrorState, LoadingState } from '@/components/shared'
-import { Button, Input, Select } from '@/components/ui'
-import { FieldCard, useFields } from '@/features/fields'
+import { InlineFieldBookingPanel } from '@/app/components/InlineFieldBookingPanel'
+import { CurrencyText, EmptyState, ErrorState, LoadingState } from '@/components/shared'
+import { Badge, Button, Input, PitchPattern, Select } from '@/components/ui'
+import { useCheckoutDraftStore } from '@/features/booking'
+import { useFields } from '@/features/fields'
 import { cn } from '@/utils/cn'
 
 const BOOKING_STEPS = [
@@ -56,21 +56,33 @@ const FAQS = [
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
 export function HomePage() {
-  const navigate = useNavigate()
+  const draft = useCheckoutDraftStore((s) => s.draft)
   const [date, setDate] = useState('')
   const [format, setFormat] = useState('')
+  const [appliedFormat, setAppliedFormat] = useState('')
+  const [expandedFieldId, setExpandedFieldId] = useState<number | null>(
+    () => draft?.fieldId ?? null,
+  )
   const [openFaq, setOpenFaq] = useState<number | null>(0)
 
-  const popularQuery = useFields({ sort: 'popular', limit: 6 })
-  const popularFields = popularQuery.data?.items ?? []
+  const fieldsQuery = useFields({
+    surface_type: appliedFormat || undefined,
+    limit: 50,
+  })
+  const fields = fieldsQuery.data?.items ?? []
+
+  const scrollToFields = () => {
+    document.getElementById('daftar-lapangan')?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    const params = new URLSearchParams()
-    if (date) params.set('date', date)
-    if (format) params.set('surface_type', format)
-    const query = params.toString()
-    navigate(query ? `${PATHS.FIELDS}?${query}` : PATHS.FIELDS)
+    setAppliedFormat(format)
+    scrollToFields()
+  }
+
+  const toggleFieldPanel = (fieldId: number) => {
+    setExpandedFieldId((prev) => (prev === fieldId ? null : fieldId))
   }
 
   return (
@@ -152,12 +164,15 @@ export function HomePage() {
           </div>
         </section>
 
-        {/* Field Catalog Preview */}
-        <section className="w-full px-4 py-12 sm:px-6 sm:py-16 lg:px-10 xl:px-14 2xl:px-16">
+        {/* Field Catalog List */}
+        <section
+          id="daftar-lapangan"
+          className="w-full scroll-mt-20 px-4 py-12 sm:px-6 sm:py-16 lg:px-10 xl:px-14 2xl:px-16"
+        >
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div className="border-l-4 border-gold-500 pl-3.5">
               <p className="font-mono text-[11px] font-bold tracking-widest text-primary-700 uppercase">
-                Arena Pilihan
+                Daftar Lapangan
               </p>
               <h2 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
                 Pilihan Lapangan Noel Futsal
@@ -166,36 +181,152 @@ export function HomePage() {
                 Pilih lapangan untuk melihat fasilitas lengkap dan slot jam yang tersedia.
               </p>
             </div>
-            <Link
-              to={PATHS.FIELDS}
-              className="group inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-3.5 py-2 text-xs font-semibold text-primary-800 transition hover:border-primary-300 hover:bg-primary-50"
-            >
-              <span>Lihat Semua</span>
-              <ArrowRight
-                className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-                aria-hidden="true"
-              />
-            </Link>
+            {appliedFormat && (
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  setFormat('')
+                  setAppliedFormat('')
+                }}
+              >
+                Reset Filter ({appliedFormat})
+              </Button>
+            )}
           </div>
 
           <div className="mt-7">
-            {popularQuery.isLoading ? (
+            {fieldsQuery.isLoading ? (
               <LoadingState variant="cards" count={3} label="Memuat daftar lapangan..." />
-            ) : popularQuery.isError ? (
+            ) : fieldsQuery.isError ? (
               <ErrorState
                 message="Gagal memuat daftar lapangan."
-                onRetry={() => void popularQuery.refetch()}
+                onRetry={() => void fieldsQuery.refetch()}
               />
-            ) : popularFields.length === 0 ? (
+            ) : fields.length === 0 ? (
               <EmptyState
                 title="Belum ada lapangan tersedia"
-                description="Lapangan akan tampil di sini setelah diaktifkan oleh pengelola."
+                description={
+                  appliedFormat
+                    ? `Tidak ada lapangan dengan jenis permukaan "${appliedFormat}".`
+                    : 'Lapangan akan tampil di sini setelah diaktifkan oleh pengelola.'
+                }
               />
             ) : (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {popularFields.map((field) => (
-                  <FieldCard key={field.id} field={field} />
-                ))}
+              <div className="space-y-5">
+                {fields.map((field) => {
+                  const isExpanded = expandedFieldId === field.id
+                  return (
+                    <div
+                      key={field.id}
+                      className={cn(
+                        'overflow-hidden rounded-xl border bg-surface transition-all',
+                        isExpanded
+                          ? 'border-primary-600/60 shadow-md ring-2 ring-primary-100'
+                          : 'border-line shadow-xs hover:border-primary-300',
+                      )}
+                    >
+                      <div className="flex flex-col sm:flex-row">
+                        <button
+                          type="button"
+                          onClick={() => toggleFieldPanel(field.id)}
+                          aria-expanded={isExpanded}
+                          className="group block w-full shrink-0 overflow-hidden text-left sm:w-64 md:w-72"
+                        >
+                          <div className="relative h-48 w-full overflow-hidden bg-primary-950 sm:h-full sm:min-h-44">
+                            {field.cover_url ? (
+                              <img
+                                src={field.cover_url}
+                                alt={field.name}
+                                loading="lazy"
+                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                              />
+                            ) : (
+                              <PitchPattern variant="lines" className="h-full w-full" />
+                            )}
+                          </div>
+                        </button>
+
+                        <div className="flex min-w-0 flex-1 flex-col justify-between gap-4 p-4 sm:flex-row sm:items-center sm:gap-6 sm:p-5">
+                          <div className="min-w-0 flex-1">
+                            <button
+                              type="button"
+                              onClick={() => toggleFieldPanel(field.id)}
+                              className="text-left"
+                            >
+                              <h3 className="truncate font-display text-lg font-bold text-ink transition-colors hover:text-primary-700 sm:text-xl">
+                                {field.name}
+                              </h3>
+                            </button>
+                            <p className="mt-1 text-xs font-medium text-fg-muted sm:text-sm">
+                              {field.surface_type} &middot; Kapasitas {field.capacity} pemain
+                            </p>
+                            {field.facilities.length > 0 && (
+                              <div className="mt-3 flex flex-wrap gap-1.5">
+                                {field.facilities.slice(0, 6).map((fac) => (
+                                  <Badge key={fac.id} variant="neutral" size="sm">
+                                    {fac.name}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3 sm:w-48 sm:shrink-0 sm:flex-col sm:items-end sm:justify-center sm:border-t-0 sm:border-l sm:pt-0 sm:pl-6">
+                            <div className="sm:text-right">
+                              <p className="font-mono text-[10px] font-semibold text-fg-muted uppercase">
+                                Tarif Mulai
+                              </p>
+                              <CurrencyText
+                                value={field.min_price}
+                                suffix="/jam"
+                                className="text-base font-bold text-ink sm:text-lg"
+                              />
+                            </div>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={isExpanded ? 'secondary' : 'primary'}
+                              fullWidth
+                              aria-expanded={isExpanded}
+                              onClick={() => toggleFieldPanel(field.id)}
+                              className="w-auto sm:w-full"
+                            >
+                              <Eye className="h-4 w-4" aria-hidden="true" />
+                              <span>{isExpanded ? 'Tutup Jadwal' : 'View'}</span>
+                              <ChevronDown
+                                className={cn(
+                                  'h-4 w-4 transition-transform duration-200',
+                                  isExpanded && 'rotate-180',
+                                )}
+                                aria-hidden="true"
+                              />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <AnimatePresence initial={false}>
+                        {isExpanded && (
+                          <motion.div
+                            key={`panel-${field.id}`}
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.25, ease: EASE_OUT }}
+                            className="overflow-hidden"
+                          >
+                            <InlineFieldBookingPanel
+                              fieldSummary={field}
+                              initialDate={date || undefined}
+                            />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -243,8 +374,14 @@ export function HomePage() {
               </ul>
 
               <div className="pt-1">
-                <Button asChild variant="accent" size="md" className="font-bold">
-                  <Link to={PATHS.FIELDS}>Lihat Jadwal Tersedia</Link>
+                <Button
+                  type="button"
+                  variant="accent"
+                  size="md"
+                  className="font-bold"
+                  onClick={scrollToFields}
+                >
+                  Lihat Jadwal Tersedia
                 </Button>
               </div>
             </div>

@@ -8,7 +8,7 @@ import type { FieldSummary } from '../types/field.types'
 export interface FieldCardProps {
   field: FieldSummary
   badgeLabel?: string
-  layout?: 'vertical' | 'responsive'
+  layout?: 'vertical' | 'responsive' | 'horizontal'
   className?: string
 }
 
@@ -19,6 +19,7 @@ export function FieldCard({
   className,
 }: FieldCardProps) {
   const isResponsive = layout === 'responsive'
+  const isHorizontal = layout === 'horizontal'
 
   return (
     <Card
@@ -26,7 +27,11 @@ export function FieldCard({
       interactive
       className={cn(
         'group flex h-full overflow-hidden',
-        isResponsive ? 'flex-row sm:flex-col' : 'flex-col',
+        isHorizontal
+          ? 'flex-col sm:flex-row'
+          : isResponsive
+            ? 'flex-row sm:flex-col'
+            : 'flex-col',
         className,
       )}
     >
@@ -34,13 +39,21 @@ export function FieldCard({
         to={PATHS.FIELD_DETAIL(field.id)}
         className={cn(
           'block shrink-0 overflow-hidden',
-          isResponsive ? 'w-28 sm:w-full' : 'w-full',
+          isHorizontal
+            ? 'w-full sm:w-64 md:w-72'
+            : isResponsive
+              ? 'w-28 sm:w-full'
+              : 'w-full',
         )}
       >
         <div
           className={cn(
             'relative overflow-hidden bg-primary-950',
-            isResponsive ? 'h-full min-h-32 sm:h-48 sm:w-full' : 'h-48 w-full',
+            isHorizontal
+              ? 'h-48 w-full sm:h-full sm:min-h-44'
+              : isResponsive
+                ? 'h-full min-h-32 sm:h-48 sm:w-full'
+                : 'h-48 w-full',
           )}
         >
           {field.cover_url ? (
@@ -63,19 +76,26 @@ export function FieldCard({
         </div>
       </Link>
 
-      <CardBody className="flex min-w-0 flex-1 flex-col justify-between p-4 sm:p-5">
-        <div>
+      <CardBody
+        className={cn(
+          'flex min-w-0 flex-1 p-4 sm:p-5',
+          isHorizontal
+            ? 'flex-col justify-between gap-4 sm:flex-row sm:items-center sm:gap-6'
+            : 'flex-col justify-between',
+        )}
+      >
+        <div className="min-w-0 flex-1">
           <Link to={PATHS.FIELD_DETAIL(field.id)}>
-            <h3 className="truncate font-display text-base font-bold text-ink transition-colors group-hover:text-primary-700 sm:text-lg">
+            <h3 className="truncate font-display text-base font-bold text-ink transition-colors group-hover:text-primary-700 sm:text-xl">
               {field.name}
             </h3>
           </Link>
-          <p className="mt-1 text-xs font-medium text-fg-muted">
+          <p className="mt-1 text-xs font-medium text-fg-muted sm:text-sm">
             {field.surface_type} &middot; Kapasitas {field.capacity} pemain
           </p>
           {field.facilities.length > 0 && (
-            <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {field.facilities.slice(0, 4).map((fac) => (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {field.facilities.slice(0, isHorizontal ? 6 : 4).map((fac) => (
                 <Badge key={fac.id} variant="neutral" size="sm">
                   {fac.name}
                 </Badge>
@@ -84,8 +104,14 @@ export function FieldCard({
           )}
         </div>
 
-        <div className="mt-4 flex flex-wrap items-end justify-between gap-2 border-t border-line pt-3">
-          <div>
+        <div
+          className={cn(
+            isHorizontal
+              ? 'flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3 sm:w-48 sm:shrink-0 sm:flex-col sm:items-end sm:justify-center sm:border-t-0 sm:border-l sm:pt-0 sm:pl-6'
+              : 'mt-4 flex flex-wrap items-end justify-between gap-2 border-t border-line pt-3',
+          )}
+        >
+          <div className={isHorizontal ? 'sm:text-right' : undefined}>
             <p className="font-mono text-[10px] font-semibold text-fg-muted uppercase">
               Tarif Mulai
             </p>
@@ -95,8 +121,10 @@ export function FieldCard({
               className="text-base font-bold text-ink sm:text-lg"
             />
           </div>
-          <Link to={PATHS.FIELD_DETAIL(field.id)}>
-            <Button size="sm">Pilih Jadwal</Button>
+          <Link to={PATHS.FIELD_DETAIL(field.id)} className={isHorizontal ? 'sm:w-full' : undefined}>
+            <Button size="sm" fullWidth={isHorizontal}>
+              Pilih Jadwal
+            </Button>
           </Link>
         </div>
       </CardBody>

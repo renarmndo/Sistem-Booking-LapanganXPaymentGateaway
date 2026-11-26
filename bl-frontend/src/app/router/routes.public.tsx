@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ReactNode } from 'react'
-import type { RouteObject } from 'react-router-dom'
+import { Navigate, type RouteObject } from 'react-router-dom'
 import { ForbiddenPage, NotFoundPage, ServerErrorPage } from '@/app/pages/StatusPages'
 import { PATHS } from '@/app/router/paths'
 import { PublicLayout } from '@/components/layout'
@@ -7,7 +7,6 @@ import { PageLoader } from '@/components/shared'
 
 const HelpPage = lazy(() => import('@/app/pages/HelpPage'))
 const HomePage = lazy(() => import('@/app/pages/HomePage'))
-const FieldListPage = lazy(() => import('@/features/fields/pages/FieldListPage'))
 const FieldDetailPage = lazy(() => import('@/app/pages/FieldDetailPage'))
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'))
 const RegisterPage = lazy(() => import('@/features/auth/pages/RegisterPage'))
@@ -34,7 +33,7 @@ export const publicRoutes: RouteObject[] = [
     children: [
       {
         path: PATHS.FIELDS,
-        element: withSuspense(<FieldListPage />),
+        element: <Navigate to={PATHS.HOME} replace />,
       },
       {
         path: PATHS.FIELD_DETAIL(),

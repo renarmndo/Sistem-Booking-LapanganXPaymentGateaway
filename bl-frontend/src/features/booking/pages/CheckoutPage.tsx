@@ -70,8 +70,7 @@ export function CheckoutPage() {
         subtitle="Periksa kembali detail jadwal dan kebijakan pembatalan sebelum mengunci slot."
         breadcrumbs={[
           { label: 'Beranda', to: PATHS.HOME },
-          { label: 'Lapangan', to: PATHS.FIELDS },
-          { label: draft.fieldName, to: PATHS.FIELD_DETAIL(draft.fieldId) },
+          { label: draft.fieldName, to: PATHS.HOME },
           { label: 'Checkout' },
         ]}
       />

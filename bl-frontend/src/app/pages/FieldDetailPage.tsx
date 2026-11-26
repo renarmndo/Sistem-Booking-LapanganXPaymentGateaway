@@ -157,10 +157,6 @@ export function FieldDetailPage() {
             Beranda
           </Link>
           <span>/</span>
-          <Link to={PATHS.FIELDS} className="hover:text-ink">
-            Lapangan
-          </Link>
-          <span>/</span>
           <span className="font-medium text-ink">{field.name}</span>
         </nav>
 

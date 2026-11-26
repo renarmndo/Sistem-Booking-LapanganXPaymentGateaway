@@ -15,7 +15,6 @@ export interface NavbarProps {
 
 const NAV_LINKS = [
   { to: PATHS.HOME, label: 'Beranda' },
-  { to: PATHS.FIELDS, label: 'Lapangan' },
   { to: PATHS.HELP, label: 'Bantuan' },
 ]
 
