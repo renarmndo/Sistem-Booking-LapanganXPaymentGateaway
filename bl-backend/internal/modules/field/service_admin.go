@@ -20,6 +20,7 @@ func (s *service) UpdateStatus(ctx context.Context, id uint, isActive bool) (*Fi
 		return nil, apperror.Internal("DB_ERROR", "Gagal memperbarui status lapangan", err)
 	}
 	s.invalidateListCache(ctx)
+	s.invalidateAvailabilityCache(ctx, id)
 
 	var upcoming int64
 	if !isActive && s.bookingCounter != nil {
@@ -132,6 +133,7 @@ func (s *service) SetFieldPrices(ctx context.Context, fieldID uint, inputs []Fie
 		return nil, apperror.Internal("DB_ERROR", "Gagal memperbarui tarif lapangan", err)
 	}
 	s.invalidateListCache(ctx)
+	s.invalidateAvailabilityCache(ctx, fieldID)
 
 	updated, err := s.repo.FindByID(ctx, fieldID)
 	if err != nil {
@@ -161,6 +163,7 @@ func (s *service) SetFieldOperatingHours(ctx context.Context, fieldID uint, inpu
 		return nil, apperror.Internal("DB_ERROR", "Gagal memperbarui jam operasional", err)
 	}
 	s.invalidateListCache(ctx)
+	s.invalidateAvailabilityCache(ctx, fieldID)
 
 	updated, err := s.repo.FindByID(ctx, fieldID)
 	if err != nil {

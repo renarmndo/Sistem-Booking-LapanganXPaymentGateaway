@@ -56,11 +56,14 @@ function CashPaymentForm({ booking, onClose }: { booking: AdminBookingItem; onCl
       <FormField label="Nominal Pembayaran" htmlFor="cash-amt" required>
         <Input
           id="cash-amt"
-          type="number"
-          min={1}
-          max={remaining}
-          value={amount}
-          onChange={(e) => setAmount(Number(e.target.value) || 0)}
+          type="text"
+          inputMode="numeric"
+          placeholder="0"
+          value={amount === 0 ? '' : String(amount)}
+          onChange={(e) => {
+            const digits = e.target.value.replace(/\D/g, '')
+            setAmount(digits === '' ? 0 : Number(digits))
+          }}
           required
         />
       </FormField>

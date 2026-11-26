@@ -476,12 +476,13 @@ export function OfflineBookingForm({
               <FormField label="Nominal Diterima (DP)" htmlFor="pay-amount">
                 <Input
                   id="pay-amount"
-                  type="number"
-                  min={1000}
-                  max={Math.max(1000, totalAmount - 1)}
-                  value={amountPaid}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Contoh: 100000"
+                  value={amountPaid === 0 ? '' : String(amountPaid)}
                   onChange={(e) => {
-                    setAmountPaid(Number(e.target.value) || 0)
+                    const digits = e.target.value.replace(/\D/g, '')
+                    setAmountPaid(digits === '' ? 0 : Number(digits))
                     setStepError(null)
                   }}
                 />

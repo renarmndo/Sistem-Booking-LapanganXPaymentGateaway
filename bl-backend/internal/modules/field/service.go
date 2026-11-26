@@ -187,6 +187,7 @@ func (s *service) Create(ctx context.Context, req CreateFieldRequest) (*FieldDet
 	}
 
 	s.invalidateListCache(ctx)
+	s.invalidateAvailabilityCache(ctx, entity.ID)
 	return s.GetByID(ctx, entity.ID)
 }
 
@@ -292,6 +293,7 @@ func (s *service) Update(ctx context.Context, id uint, req UpdateFieldRequest) (
 	}
 
 	s.invalidateListCache(ctx)
+	s.invalidateAvailabilityCache(ctx, id)
 	return s.GetByID(ctx, id)
 }
 
@@ -307,6 +309,7 @@ func (s *service) Delete(ctx context.Context, id uint) error {
 		return apperror.Internal("DB_ERROR", "Gagal menghapus lapangan", err)
 	}
 	s.invalidateListCache(ctx)
+	s.invalidateAvailabilityCache(ctx, id)
 	return nil
 }
 
@@ -579,6 +582,13 @@ func (s *service) invalidateListCache(ctx context.Context) {
 		return
 	}
 	_ = s.cache.DeleteByPrefix(ctx, constant.FieldsListCachePrefix)
+}
+
+func (s *service) invalidateAvailabilityCache(ctx context.Context, fieldID uint) {
+	if s.cache == nil {
+		return
+	}
+	_ = s.cache.DeleteByPrefix(ctx, constant.AvailCachePrefix(fieldID))
 }
 
 func hashListFilter(filter ListFieldsFilter) string {

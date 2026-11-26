@@ -13,9 +13,16 @@ import { useAdminBookings, useDeleteScheduleBlock, useScheduleBlocks } from '../
 import type { AdminBookingItem, ScheduleBlock } from '../../types/adminOps.types'
 import { BlockScheduleDialog } from '../components/BlockScheduleDialog'
 
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export function AdminSchedulesPage() {
   const navigate = useNavigate()
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(() => formatLocalDate(new Date()))
   const [mobileFieldId, setMobileFieldId] = useState<number>(0)
 
   const fieldsQuery = useAdminFields({ is_active: true, limit: 20 })
@@ -78,7 +85,11 @@ export function AdminSchedulesPage() {
   }
 
   const mobileFieldIndex = fields.findIndex((f) => f.id === activeMobileFieldId)
-  const mobileSlots = mobileFieldIndex >= 0 ? availQueries[mobileFieldIndex]?.data ?? [] : []
+  const mobileAvailQuery = mobileFieldIndex >= 0 ? availQueries[mobileFieldIndex] : undefined
+  const mobileSlots = mobileAvailQuery?.data ?? []
+  const isInitialGridLoading =
+    fieldsQuery.isLoading ||
+    (fields.length > 0 && allHours.length === 0 && availQueries.some((q) => q.isPending))
 
   return (
     <div className="space-y-6">
@@ -146,36 +157,48 @@ export function AdminSchedulesPage() {
           onChange={(e) => setMobileFieldId(Number(e.target.value))}
         />
         <div className="space-y-2">
-          {mobileSlots.map((slot) => (
-            <button
-              key={slot.start_time}
-              type="button"
-              onClick={() =>
-                handleCellClick(
-                  activeMobileFieldId,
-                  fields[mobileFieldIndex]?.name ?? 'Lapangan',
-                  slot,
-                )
-              }
-              className={`flex w-full items-center justify-between rounded-md border px-3 py-2.5 text-left text-xs ${slotBadgeStyle(slot.status)}`}
-            >
-              <span className="font-mono font-semibold">
-                {slot.start_time} – {slot.end_time}
-              </span>
-              <span className="uppercase">{slot.status}</span>
-            </button>
-          ))}
+          {mobileAvailQuery?.isPending ? (
+            Array.from({ length: 6 }, (_, idx) => <Skeleton key={idx} className="h-10 w-full" />)
+          ) : mobileSlots.length === 0 ? (
+            <p className="rounded-md border border-line bg-surface p-4 text-center text-xs text-fg-muted">
+              Tidak ada jam operasional pada tanggal ini.
+            </p>
+          ) : (
+            mobileSlots.map((slot) => (
+              <button
+                key={slot.start_time}
+                type="button"
+                onClick={() =>
+                  handleCellClick(
+                    activeMobileFieldId,
+                    fields[mobileFieldIndex]?.name ?? 'Lapangan',
+                    slot,
+                  )
+                }
+                className={`flex w-full items-center justify-between rounded-md border px-3 py-2.5 text-left text-xs ${slotBadgeStyle(slot.status)}`}
+              >
+                <span className="font-mono font-semibold">
+                  {slot.start_time} – {slot.end_time}
+                </span>
+                <span className="uppercase">{slot.status}</span>
+              </button>
+            ))
+          )}
         </div>
       </div>
 
       {/* Desktop timeline grid */}
       <div className="hidden overflow-x-auto rounded-lg border border-line bg-surface lg:block">
-        {fieldsQuery.isLoading ? (
+        {isInitialGridLoading ? (
           <div className="p-4">
             <Skeleton className="h-64 w-full" />
           </div>
         ) : fields.length === 0 ? (
           <p className="p-6 text-center text-sm text-fg-muted">Belum ada lapangan aktif.</p>
+        ) : allHours.length === 0 ? (
+          <p className="p-6 text-center text-sm text-fg-muted">
+            Tidak ada jam operasional tersedia pada tanggal {date}.
+          </p>
         ) : (
           <table className="w-full border-collapse text-xs">
             <thead>
@@ -193,7 +216,22 @@ export function AdminSchedulesPage() {
                 <tr key={hour} className="border-b border-line last:border-b-0">
                   <td className="px-3 py-2 font-mono font-semibold text-fg-muted">{hour}</td>
                   {fields.map((f, idx) => {
-                    const slot = (availQueries[idx]?.data ?? []).find((s) => s.start_time === hour)
+                    const fieldQuery = availQueries[idx]
+                    if (fieldQuery?.isPending) {
+                      return (
+                        <td key={f.id} className="px-2 py-1.5">
+                          <Skeleton className="h-9 w-full rounded" />
+                        </td>
+                      )
+                    }
+                    if (fieldQuery?.isError) {
+                      return (
+                        <td key={f.id} className="px-2 py-1.5 text-[11px] text-danger">
+                          Gagal memuat
+                        </td>
+                      )
+                    }
+                    const slot = (fieldQuery?.data ?? []).find((s) => s.start_time === hour)
                     if (!slot) {
                       return (
                         <td key={f.id} className="px-2 py-1.5 text-fg-muted">

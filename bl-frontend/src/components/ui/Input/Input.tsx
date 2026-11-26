@@ -12,6 +12,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       aria-invalid={error || undefined}
       className={cn(
         'h-11 w-full rounded-md border bg-surface px-3.5 text-sm text-fg placeholder:text-fg-subtle transition md:h-10',
+        '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
         'focus:outline-none focus:ring-2 focus:ring-primary-300',
         'disabled:cursor-not-allowed disabled:bg-surface-alt disabled:opacity-60',
         error

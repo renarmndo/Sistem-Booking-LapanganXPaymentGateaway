@@ -28,6 +28,10 @@ func FieldsListCacheKey(queryHash string) string {
 	return fmt.Sprintf("%s:%s", FieldsListCachePrefix, queryHash)
 }
 
+func AvailCachePrefix(fieldID uint) string {
+	return fmt.Sprintf("cache:avail:%d:", fieldID)
+}
+
 func AvailCacheKey(fieldID uint, date string) string {
 	return fmt.Sprintf("cache:avail:%d:%s", fieldID, date)
 }

@@ -39,6 +39,7 @@ function useInvalidateFields() {
   return (fieldId?: number | string) => {
     void queryClient.invalidateQueries({ queryKey: queryKeys.admin.fields })
     void queryClient.invalidateQueries({ queryKey: queryKeys.fields.all })
+    void queryClient.invalidateQueries({ queryKey: ['fields', 'availability'] })
     if (fieldId !== undefined) {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'fields', 'detail', fieldId] })
     }

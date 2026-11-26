@@ -300,10 +300,14 @@ function AdminFieldFormContent({
               >
                 <Input
                   id="modal-field-capacity"
-                  type="number"
-                  min={2}
-                  value={values.capacity}
-                  onChange={(e) => patchValues({ capacity: Number(e.target.value) || 0 })}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="10"
+                  value={values.capacity === 0 ? '' : String(values.capacity)}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, '')
+                    patchValues({ capacity: digits === '' ? 0 : Number(digits) })
+                  }}
                   error={Boolean(errors.capacity)}
                 />
               </FormField>

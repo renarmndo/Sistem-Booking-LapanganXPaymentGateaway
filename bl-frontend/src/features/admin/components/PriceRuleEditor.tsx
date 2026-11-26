@@ -86,13 +86,14 @@ export function PriceRuleEditor({ value, onChange, error }: PriceRuleEditorProps
             <div className="sm:col-span-3">
               <label className="mb-1 block text-xs font-medium text-fg-muted">Tarif (Rp)</label>
               <Input
-                type="number"
-                min={1000}
-                step={5000}
-                value={rule.price_per_slot}
-                onChange={(e) =>
-                  updateRule(idx, { price_per_slot: Number(e.target.value) || 0 })
-                }
+                type="text"
+                inputMode="numeric"
+                placeholder="Contoh: 200000"
+                value={rule.price_per_slot === 0 ? '' : String(rule.price_per_slot)}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, '')
+                  updateRule(idx, { price_per_slot: digits === '' ? 0 : Number(digits) })
+                }}
               />
             </div>
 

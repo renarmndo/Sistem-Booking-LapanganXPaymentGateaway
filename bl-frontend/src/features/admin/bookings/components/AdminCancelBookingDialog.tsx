@@ -73,11 +73,15 @@ function AdminCancelForm({ booking, onClose }: { booking: AdminBookingItem; onCl
             <FormField label="Nominal Refund (Rp)" htmlFor="admin-refund-amt">
               <Input
                 id="admin-refund-amt"
-                type="number"
-                min={0}
-                max={booking.total_amount}
-                value={refundAmount}
-                onChange={(e) => setRefundAmount(Number(e.target.value) || 0)}
+                type="text"
+                inputMode="numeric"
+                placeholder="0"
+                value={refundAmount === 0 ? '' : String(refundAmount)}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, '')
+                  const parsed = digits === '' ? 0 : Number(digits)
+                  setRefundAmount(Math.min(parsed, booking.total_amount))
+                }}
               />
             </FormField>
           )}
