@@ -57,11 +57,15 @@ const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
 export function HomePage() {
   const draft = useCheckoutDraftStore((s) => s.draft)
+  const today = (() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  })()
   const [date, setDate] = useState('')
   const [format, setFormat] = useState('')
   const [appliedFormat, setAppliedFormat] = useState('')
-  const [expandedFieldId, setExpandedFieldId] = useState<number | null>(
-    () => draft?.fieldId ?? null,
+  const [expandedFieldId, setExpandedFieldId] = useState<number | null>(() =>
+    draft && draft.date >= today ? draft.fieldId : null,
   )
   const [openFaq, setOpenFaq] = useState<number | null>(0)
 
@@ -135,7 +139,13 @@ export function HomePage() {
                   <label htmlFor="hero-date" className="block text-xs font-semibold text-fg-muted">
                     Tanggal Main
                   </label>
-                  <Input id="hero-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                  <Input
+                    id="hero-date"
+                    type="date"
+                    min={today}
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5 lg:col-span-4">
                   <label htmlFor="hero-format" className="block text-xs font-semibold text-fg-muted">

@@ -48,10 +48,13 @@ export function InlineFieldBookingPanel({
   const setDraft = useCheckoutDraftStore((s) => s.setDraft)
 
   const fieldId = fieldSummary.id
-  const matchingDraft = draft && String(draft.fieldId) === String(fieldId) ? draft : null
+  const today = todayYMD()
+  const rawDraft = draft && String(draft.fieldId) === String(fieldId) ? draft : null
+  const matchingDraft = rawDraft && rawDraft.date >= today ? rawDraft : null
+  const validInitialDate = initialDate && initialDate >= today ? initialDate : undefined
 
   const [selectedDate, setSelectedDate] = useState(
-    () => matchingDraft?.date ?? (initialDate || todayYMD()),
+    () => matchingDraft?.date ?? validInitialDate ?? today,
   )
   const [activeTab, setActiveTab] = useState('jadwal')
   const [slotPeriod, setSlotPeriod] = useState<SlotPeriod>('all')

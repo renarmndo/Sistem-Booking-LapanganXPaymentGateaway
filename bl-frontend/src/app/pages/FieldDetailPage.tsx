@@ -42,8 +42,10 @@ export function FieldDetailPage() {
   const draft = useCheckoutDraftStore((s) => s.draft)
   const setDraft = useCheckoutDraftStore((s) => s.setDraft)
 
-  const matchingDraft = draft && String(draft.fieldId) === String(id) ? draft : null
-  const [selectedDate, setSelectedDate] = useState(() => matchingDraft?.date ?? todayYMD())
+  const today = todayYMD()
+  const rawDraft = draft && String(draft.fieldId) === String(id) ? draft : null
+  const matchingDraft = rawDraft && rawDraft.date >= today ? rawDraft : null
+  const [selectedDate, setSelectedDate] = useState(() => matchingDraft?.date ?? today)
   const [activeTab, setActiveTab] = useState('jadwal')
   const [slotPeriod, setSlotPeriod] = useState<SlotPeriod>('all')
 
